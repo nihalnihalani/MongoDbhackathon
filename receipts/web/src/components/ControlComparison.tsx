@@ -82,49 +82,75 @@ function AuthorHead({ review }: { review: ReviewDetail }) {
   )
 }
 
-function Column({ review, other }: { review: ReviewDetail; other: ReviewDetail }) {
+/**
+ * One side of the comparison.
+ *
+ * The cells are placed into the PARENT grid by explicit row and column (the
+ * wrapper is `display: contents` at wide widths), rather than being two
+ * independent lists sitting side by side. That is not a refactor for its own
+ * sake: the columns have different amounts of text, so two independent lists
+ * drift — the verdicts end up on different lines and the eye can no longer scan
+ * across. The comparison only works if "escalated" on the left sits on exactly
+ * the same line as "escalated" on the right.
+ *
+ * Below 860px the parent stops being a grid, these placements are ignored, and
+ * the columns stack.
+ */
+function Column({
+  review,
+  other,
+  col,
+}: {
+  review: ReviewDetail
+  other: ReviewDetail
+  col: number
+}) {
   const decision = review.verdict?.decision ?? review.status
+  const firstRow = 3
 
   return (
-    <div className="flex min-w-0 flex-col gap-3">
-      <AuthorHead review={review} />
+    <div className="control-col min-w-0">
+      <div style={{ gridColumn: col, gridRow: 1 }}>
+        <AuthorHead review={review} />
+      </div>
 
-      <Link
-        to={`/review/${review.id}`}
-        className="mono underline decoration-dotted underline-offset-4"
-        style={{ fontSize: 'var(--fs-mono-sm)', color: 'var(--ink-steel)' }}
-      >
-        {prNumber(review.prId)} — open case file
-      </Link>
+      <div style={{ gridColumn: col, gridRow: 2, paddingBottom: 'var(--s-3)' }}>
+        <Link
+          to={`/review/${review.id}`}
+          className="mono underline decoration-dotted underline-offset-4"
+          style={{ fontSize: 'var(--fs-mono-sm)', color: 'var(--ink-steel)' }}
+        >
+          {prNumber(review.prId)} — open case file
+        </Link>
+      </div>
 
-      <dl className="m-0 flex flex-col gap-0">
-        {ROWS.map((row) => {
-          const value = row.of(review)
-          const differs = value !== row.of(other)
-          return (
-            <div
-              key={row.label}
-              className="flex items-baseline justify-between gap-3 border-b py-2"
-              style={{ borderColor: 'var(--line)' }}
+      {ROWS.map((row, i) => {
+        const value = row.of(review)
+        const differs = value !== row.of(other)
+        return (
+          <div
+            key={row.label}
+            className="flex items-baseline justify-between gap-3 border-b py-2"
+            style={{ gridColumn: col, gridRow: firstRow + i, borderColor: 'var(--line)' }}
+          >
+            <span className="label">{row.label}</span>
+            <span
+              className="mono text-right"
+              style={{
+                fontSize: 'var(--fs-mono-sm)',
+                // Identical values stay quiet. Only difference is inked — if
+                // every cell is coloured then nothing is.
+                color: differs ? 'var(--ink)' : 'var(--ink-2)',
+                fontWeight: differs ? 700 : 400,
+              }}
             >
-              <dt className="label">{row.label}</dt>
-              <dd
-                className="mono m-0 text-right"
-                style={{
-                  fontSize: 'var(--fs-mono-sm)',
-                  // Identical values stay quiet. Only difference is inked.
-                  color: differs ? 'var(--ink)' : 'var(--ink-2)',
-                  fontWeight: differs ? 700 : 400,
-                }}
-              >
-                {value}
-              </dd>
-            </div>
-          )
-        })}
-      </dl>
+              {value}
+            </span>
+          </div>
+        )
+      })}
 
-      <div>
+      <div style={{ gridColumn: col, gridRow: firstRow + ROWS.length, paddingTop: 'var(--s-4)' }}>
         <span className="label">Belief</span>
         <p
           className="mt-1.5"
@@ -138,13 +164,18 @@ function Column({ review, other }: { review: ReviewDetail; other: ReviewDetail }
         </p>
       </div>
 
-      {/* Plain text, per §3 — the stamp is scarce and lives on the case file. */}
-      <span
-        className="label"
-        style={{ color: VERDICT_INK[decision] ?? 'var(--ink-2)', fontSize: '15px' }}
+      {/* Plain text, per §3 — the stamp is scarce and lives on the case file.
+          Two stamps side by side would halve the force of both. */}
+      <div
+        style={{ gridColumn: col, gridRow: firstRow + ROWS.length + 1, paddingTop: 'var(--s-4)' }}
       >
-        {decision}
-      </span>
+        <span
+          className="label"
+          style={{ color: VERDICT_INK[decision] ?? 'var(--ink-2)', fontSize: '15px' }}
+        >
+          {decision}
+        </span>
+      </div>
     </div>
   )
 }
@@ -185,9 +216,9 @@ export function ControlComparison({ leftId, rightId }: { leftId: string; rightId
       {diff && <DiffHunk hunk={diff} />}
 
       <div className="control-grid">
-        <Column review={left.data} other={right.data} />
+        <Column review={left.data} other={right.data} col={1} />
         <div className="control-rule" aria-hidden="true" />
-        <Column review={right.data} other={left.data} />
+        <Column review={right.data} other={left.data} col={3} />
       </div>
 
       <p

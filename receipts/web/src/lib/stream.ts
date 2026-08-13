@@ -7,7 +7,7 @@
  * investigation once at realistic pacing and then rests.
  */
 
-import { API_BASE } from './api'
+import { API_BASE, BACKEND_CONFIGURED } from './api'
 import { streamScript } from '../fixtures/streamScript'
 import { markFixtureMode, sourceStore } from './source'
 import type { StreamEvent } from './types'
@@ -222,6 +222,19 @@ export function connectStream(
       // EventSource retries internally; we drive our own backoff instead so we
       // can bail out to fixtures after a bounded number of failures.
       scheduleRetry()
+    }
+  }
+
+  // No backend configured means no backend to reach for. Going straight to the
+  // recorded arc keeps the console clean and skips a pointless 2.5s timeout
+  // before the hero surface of the product does anything at all.
+  if (!BACKEND_CONFIGURED) {
+    goToFixtures()
+    return {
+      stop() {
+        stopped = true
+        fallback?.stop()
+      },
     }
   }
 

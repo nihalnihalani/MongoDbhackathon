@@ -641,10 +641,15 @@
      "scrutiny" on the left sits on exactly the same line as "scrutiny" on the
      right. Two independent lists would drift by a few pixels and quietly
      destroy the whole argument. */
+  /* Narrow: the two blocks simply stack, Liam first. The explicit grid-row /
+     grid-column placements the cells carry are inert outside a grid container,
+     so nothing needs to be unset. */
   .control-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--s-5);
+    display: block;
+  }
+
+  .control-col + .control-col {
+    margin-top: var(--s-6);
   }
 
   .control-rule {
@@ -654,13 +659,23 @@
 
   @media (min-width: 860px) {
     .control-grid {
+      display: grid;
       grid-template-columns: minmax(0, 1fr) 1px minmax(0, 1fr);
-      gap: var(--s-6);
+      column-gap: var(--s-6);
       align-items: start;
+    }
+    /* The column wrapper dissolves so its cells become children of the shared
+       grid — this is what actually keeps the two sides on the same rows. */
+    .control-col {
+      display: contents;
+    }
+    .control-col + .control-col {
+      margin-top: 0;
     }
     .control-rule {
       display: block;
-      align-self: stretch;
+      grid-column: 2;
+      grid-row: 1 / -1;
       width: 1px;
     }
   }
