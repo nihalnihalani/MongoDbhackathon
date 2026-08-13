@@ -63,12 +63,13 @@ flowchart LR
         WEB["Product-vision UI<br/><i>web/ · React · fixtures</i>"]
     end
 
-    API["⚙️ Express API<br/>submit · ship · confirm · evidence<br/>SSE fan-out"]
+    GH["🐙 GitHub fork PR<br/>signed webhook + commit status"]
+    API["⚙️ Express API<br/>submit · ship · confirm · evidence<br/>webhook · SSE fan-out"]
     CAN["🐤 Canary<br/><b>executes the PR's function</b><br/>roundMoney(1.005) → 1.00 ❌"]
 
     subgraph ATLAS["🍃 MongoDB Atlas"]
         direction TB
-        DB[("pr_receipts · incidents<br/>review_contracts · contributors<br/>counters · reviewer_status")]
+        DB[("pr_receipts · incidents · review_contracts<br/>github deliveries · publications<br/>contributors · counters · reviewer_status")]
         VEC{{"$vectorSearch<br/>384-dim cosine"}}
     end
 
@@ -79,6 +80,7 @@ flowchart LR
         LLM["3 · Review<br/>Fireworks │ OpenRouter<br/><i>labeled template fallback</i>"]
     end
 
+    GH -->|"pull_request webhook"| API
     OP -->|"submit / ship / confirm"| API
     API --> CAN --> API
     API --> DB
@@ -90,6 +92,7 @@ flowchart LR
     DEPTH --> LLM
     LLM -->|"verdict + contract satisfaction"| DB
     BLK --> DB
+    DB -->|"status + review receipt"| GH
     DB -->|"change streams → SSE"| ST
     DB -.->|"not yet wired"| WEB
 
@@ -144,6 +147,7 @@ Embeddings run **locally** (`Xenova/all-MiniLM-L6-v2`, 384-dim) — no embedding
 | Surface | Path | What it is |
 |---|---|---|
 | **Canonical demo** | `receipts/public/` | The operator console (numbered controls) and the live stage screen. Backed by real MongoDB writes and driven by change streams over SSE. **This is what runs on stage.** |
+| **Live GitHub proof** | `receipts/public/live.html` | A PR targeting an authorized fork triggers a signed webhook, becomes an idempotent MongoDB receipt, is reviewed by the disposable worker and receives a GitHub commit status plus review comment. |
 | **Product vision** | `receipts/web/` | React 19 + TypeScript strict + Vite 8 + Tailwind v4. Routes: `/` Courtroom (live stream), `/contributor/:id` Dossier, `/review/:id` Case File, with a control-condition compare at `/review/rev-512`. Dark/light, WCAG AA tokens, `prefers-reduced-motion` parity. Design spec: [`receipts/web/DESIGN.md`](receipts/web/DESIGN.md) — *"a microfiche reader in a dark evidence room."* |
 
 **Honest boundary:** the React UI runs on **fixture replay** and is not yet wired to the MongoDB API — it renders the product this becomes, not live data. The mechanics claims in this README are all proven by the `public/` demo and the source referenced above.
@@ -172,6 +176,21 @@ npm run reviewer         # generation N — 0 prior messages
 
 Open the **operator console** at `http://localhost:4000/` and the **stage** at `http://localhost:4000/stage.html`. Follow the numbered controls; at step 4, `Ctrl-C` the reviewer and run `npm run reviewer` again to create a fresh generation.
 
+### Live GitHub fork demo
+
+The repository webhook must be installed on the PR's **base repository**. For the current public demo that is [`gorajing/mongo`](https://github.com/gorajing/mongo), not upstream `mongodb/mongo`.
+
+```bash
+cd receipts
+npm run seed:github       # upserts the bounded SERVER-132850 lesson; deletes nothing
+PORT=4100 npm run server  # signed webhook + live receipt at /live.html
+npm run reviewer          # generation N starts with zero prior messages
+```
+
+Forward events only to `POST /webhooks/github` through a one-way relay such as Smee, subscribe the fork webhook to `pull_request`, and use the same random `GITHUB_WEBHOOK_SECRET` on both sides. Do **not** reverse-proxy the whole Express app: `/submit` and `/ship` are unauthenticated local-demo controls, and `/ship` executes operator-authored fixture code. Set `GITHUB_TOKEN` for deployment; locally the publisher can reuse an authenticated `gh api` session without exporting its token. Open the live page at `http://localhost:4100/live.html`, then open or update a PR whose base is `gorajing/mongo`.
+
+The webhook acknowledges only after its delivery ID is durably recorded. The worker fetches the real GitHub patch, maps changed paths to a subsystem, lets MongoDB contracts select scrutiny and posts the result as `PR-Elo / persistent review`. Replayed delivery IDs and repeated publications are deduplicated in MongoDB; startup recovery retries both interrupted deliveries and reviewed receipts whose GitHub publication did not finish.
+
 <details>
 <summary><b>Optional checks & the product-vision UI</b></summary>
 
@@ -198,7 +217,7 @@ Honest scope. What ships on stage vs. what a real deployment needs:
 | **API surface** | No auth, no input-validation layer on the Express API. | AuthN/Z on every mutating route, schema validation, rate limits. |
 | **Reviewer availability** | Single-reviewer singleton heartbeat; change stream has **no resume tokens** (process exits on stream error). | Resume tokens, leader election, backoff + replay from the last token. |
 | **Known logic gap** | Contract satisfaction is recorded *before* the verdict is known. | Record satisfaction only on a passing verdict. `receipts/src/reviewer.js:44-48` |
-| **Source of truth** | GitHub is simulated through the operator console. | GitHub App + webhooks; PR checks backed by verified CI artifacts. |
+| **Source of truth** | Signed GitHub webhooks on an authorized fork; local `gh api` or `GITHUB_TOKEN` publishes a commit status and review comment. | GitHub App installation tokens, Check Runs and verified CI artifacts. |
 | **Evidence** | An evidence key plus optional corrected code, re-executed by the canary. | Independently verified CI test artifacts, signed. |
 | **Vector failure mode** | Retrieval errors fall back to "no similar incidents," which can select the standard lane. | Fail **closed** or alert visibly — never silently downgrade scrutiny. |
 | **Adjudication** | Any operator can confirm a PR→incident linkage; `/confirm` does not enforce that the PR shipped and its canary failed. | Authenticated incident adjudication with an audit trail and state preconditions. |
@@ -214,7 +233,8 @@ MongoDbhackathon/
 ├── receipts/                  ← the hackathon demo (canonical)
 │   ├── public/
 │   │   ├── index.html         ← numbered operator console
-│   │   └── stage.html         ← live stage visualization
+│   │   ├── stage.html         ← live stage visualization
+│   │   └── live.html          ← real GitHub → MongoDB → reviewer → GitHub proof
 │   ├── src/                   ← schema · ops · reviewer · embed · llm · server · seed · proof
 │   ├── web/                   ← product-vision React UI (fixture replay) + DESIGN.md
 │   └── test/                  ← llm.test.js

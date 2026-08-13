@@ -19,6 +19,10 @@
  *                      authorAtFault, active, satisfiedBy[], createdAt }
  *   counters         { _id, seq }
  *   reviewer_status  { _id:'reviewer', generation, msgCount, alive, lastSeen }
+ *   github_webhook_deliveries { _id: deliveryId, eventName, action, pullRequest,
+ *                               status, receiptPrNum, receivedAt, processedAt }
+ *   github_publications { _id: publicationKey, repository, prNum, headSha,
+ *                         status, statusUrl, commentUrl, publishedAt }
  */
 import { client, db } from './db.js';
 
@@ -31,6 +35,8 @@ export const incidents = () => db().collection('incidents');
 export const contracts = () => db().collection('review_contracts');
 export const counters = () => db().collection('counters');
 export const reviewerStatus = () => db().collection('reviewer_status');
+export const githubDeliveries = () => db().collection('github_webhook_deliveries');
+export const githubPublications = () => db().collection('github_publications');
 
 export async function nextSeq(name) {
   const r = await counters().findOneAndUpdate(
@@ -50,8 +56,18 @@ export async function setupSchema() {
 
   await receipts().createIndex({ prNum: 1 }, { unique: true });
   await receipts().createIndex({ author: 1, subsystem: 1 });
+  await receipts().createIndex(
+    { 'github.repository': 1, 'github.number': 1, 'github.headSha': 1 },
+    { unique: true, partialFilterExpression: { 'github.repository': { $type: 'string' } } },
+  );
   await incidents().createIndex({ num: 1 }, { unique: true });
   await contracts().createIndex({ subsystem: 1, active: 1 });
+  await contracts().createIndex(
+    { demoKey: 1 },
+    { unique: true, partialFilterExpression: { demoKey: { $type: 'string' } } },
+  );
+  await githubDeliveries().createIndex({ status: 1, receivedAt: 1 });
+  await githubPublications().createIndex({ status: 1, createdAt: 1 });
 
   const existing = await incidents().listSearchIndexes().toArray().catch(() => []);
   if (!existing.some((i) => i.name === VECTOR_INDEX)) {

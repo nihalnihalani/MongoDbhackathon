@@ -12,7 +12,7 @@ import {
 
 export async function submitPR({
   author, subsystem, changeType = 'feature', title, code, fnName = null,
-  evidence = [], canaryCases = [], onFail = null,
+  evidence = [], canaryCases = [], onFail = null, github = null,
 }) {
   await contributors().updateOne(
     { _id: author },
@@ -22,7 +22,7 @@ export async function submitPR({
   const prNum = await nextSeq('pr');
   const doc = {
     prNum, author, subsystem, changeType, title, code, fnName,
-    evidence, canaryCases, onFail,
+    evidence, canaryCases, onFail, github,
     status: 'submitted', outcome: 'pending', review: null, canary: null,
     ts: new Date(),
   };
