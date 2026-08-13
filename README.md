@@ -6,6 +6,21 @@ Team repo for the [Persistent Context Sprint Hackathon](https://cerebralvalley.a
 
 Every agent starts from nothing. Build one that doesn't. Use MongoDB to hold state, memory, and live application data so the agent comes back with what it learned last time instead of relearning everything. What we store, retrieve, and checkpoint should change what the system does next — not just fill the prompt.
 
+## Agent inference package
+
+This repository includes the provider-neutral MURMUR review harness. Fireworks and OpenRouter are interchangeable inference providers selected with `MURMUR_PROVIDER`. MongoDB, GitHub, and frontend work are intentionally represented only by the `ReviewDataSource` interface.
+
+```bash
+npm install
+export MURMUR_PROVIDER=fireworks # or openrouter
+export FIREWORKS_API_KEY=...    # key for the selected provider
+# export OPENROUTER_API_KEY=... # use this instead when provider=openrouter
+npm test
+npm run agent -- --event examples/pr-event.json --snapshot examples/review-snapshot.json
+```
+
+The CLI writes progress to stderr and the final structured result to stdout. It reads environment variables from the shell; it does not load `.env` files automatically. See [the inference integration guide](docs/agent-harness.md) for provider configuration, backend wiring, event/result types, and operational behavior.
+
 ## 📅 Key Times (event day)
 
 | Time | What |
