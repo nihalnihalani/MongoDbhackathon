@@ -41,11 +41,11 @@ PR ships → canary fails in production → operator confirms the causal linkage
 
 The reviewer is deliberately disposable. Kill it mid-demo and its successor boots with **zero prior messages**, reads the contract from MongoDB, and blocks a PR that its predecessor would have waved through. That behavioral delta — not a longer prompt — is the whole claim.
 
-**How it frames people.** PR-Elo allocates scrutiny; it does not score humans.
+**How it frames people.** The Elo is on the *change*, not the author. PR-Elo rates how much proven evidence a pull request must carry to enter a subsystem — a rating that moves when a canary proves something, never a rating of an engineer.
 
 | Rule | What it means |
 |---|---|
-| 🎯 **Scrutiny allocation** | Output is *review depth*, scoped `contributor × subsystem` — never a reputation number, never a global developer score. |
+| 🎯 **The change is what's rated** | Output is a *review-depth requirement* on a PR entering a subsystem. Standing is scoped `contributor × subsystem`, read as history — never published as a global developer score. |
 | ❓ **Unknown by default** | States are `unknown · building · proven · proof-debt`. No evidence ≠ trusted, and ≠ suspect. |
 | 🏛️ **Organizational, not personal** | A confirmed payments failure guards *every* future payments PR, regardless of author. |
 | ↩️ **Recovery is always open** | Proof debt is paid down by executed evidence; contracts unlock. |
