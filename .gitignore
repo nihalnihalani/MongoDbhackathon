@@ -1,0 +1,9 @@
+# MongoDB's workshop clone — not our work, not part of the submission
+mongodb-airbnb-workshop/
+
+# Never commit credentials (subprojects also ignore these; defense in depth)
+.env
+.mcp.json
+node_modules/
+*.log
+.DS_Store

@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>SCAPEGOAT</title>
+<style>
+  :root { --bg:#0d0f0e; --fg:#f2f5f3; --dim:#8b9a91; --line:#26302b; --boo:#e8503a; --yes:#22c07a; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; background:var(--bg); color:var(--fg);
+         font:16px/1.5 -apple-system,system-ui,sans-serif; padding:20px; }
+  h1 { font-size:28px; letter-spacing:-.02em; margin:8px 0 2px; }
+  .sub { color:var(--dim); font-size:14px; margin-bottom:22px; }
+  label { display:block; font-size:12px; letter-spacing:.1em; text-transform:uppercase;
+          color:var(--dim); margin:16px 0 6px; }
+  input, textarea { width:100%; background:#151b18; color:var(--fg); border:1px solid var(--line);
+                    border-radius:10px; padding:14px; font-size:17px; font-family:inherit; }
+  textarea { min-height:96px; resize:vertical; }
+  button { width:100%; border:0; border-radius:12px; padding:16px; font-size:17px;
+           font-weight:700; font-family:inherit; margin-top:12px; color:#fff; background:#2f3a34; }
+  button:active { transform:scale(.985); }
+  .votes { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px; }
+  .boo { background:var(--boo); font-size:22px; padding:26px 0; }
+  .yes { background:var(--yes); color:#04170e; font-size:22px; padding:26px 0; }
+  .q { border:1px solid var(--line); border-radius:12px; padding:14px; background:#121815; }
+  .q .lab { font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--dim); }
+  .q .txt { font-size:18px; margin-top:6px; }
+  .toast { position:fixed; left:20px; right:20px; bottom:20px; background:#1d2622;
+           border:1px solid var(--line); border-radius:12px; padding:14px; text-align:center;
+           opacity:0; transition:opacity .25s; pointer-events:none; }
+  .toast.on { opacity:1; }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+  <h1>SCAPEGOAT</h1>
+  <div class="sub">Tell it something. It will remember who told it.</div>
+
+  <div id="setup">
+    <label for="name">Your name</label>
+    <input id="name" autocomplete="given-name" placeholder="Kevin">
+    <button id="joinBtn">Join</button>
+  </div>
+
+  <div id="main" class="hidden">
+    <div class="q">
+      <div class="lab">On the floor</div>
+      <div class="txt" id="current">Waiting for a question…</div>
+    </div>
+
+    <div class="votes">
+      <button class="boo" id="booBtn">BOO</button>
+      <button class="yes" id="yesBtn">YES</button>
+    </div>
+
+    <label for="mem">Tell it a fact</label>
+    <textarea id="mem" placeholder="The wifi password is…"></textarea>
+    <label for="src">Who told you? (optional — they share the blame)</label>
+    <input id="src" placeholder="Dana">
+    <button id="memBtn">Submit memory</button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  let me = localStorage.getItem('sg_name') || '';
+
+  const toast = (msg) => {
+    $('toast').textContent = msg;
+    $('toast').classList.add('on');
+    setTimeout(() => $('toast').classList.remove('on'), 1600);
+  };
+
+  const post = (path, body) =>
+    fetch(path, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) })
+      .then(r => r.json());
+
+  function enter(name) {
+    me = name;
+    localStorage.setItem('sg_name', name);
+    $('setup').classList.add('hidden');
+    $('main').classList.remove('hidden');
+  }
+
+  $('joinBtn').onclick = async () => {
+    const name = $('name').value.trim();
+    if (!name) return toast('Enter a name first');
+    await post('/join', { name });
+    enter(name);
+    toast('You are on the board, ' + name);
+  };
+
+  $('memBtn').onclick = async () => {
+    const text = $('mem').value.trim();
+    if (!text) return toast('Type something first');
+    await post('/remember', { name: me, text, derivedFrom: $('src').value.trim() });
+    $('mem').value = '';
+    toast('It will remember you said that');
+  };
+
+  $('booBtn').onclick = async () => { await post('/vote', { voter: me, choice:'boo' }); toast('BOO registered'); };
+  $('yesBtn').onclick = async () => { await post('/vote', { voter: me, choice:'yes' }); toast('YES registered'); };
+
+  // The phone follows the floor: whatever the agent just claimed shows up here,
+  // so a voter is reacting to the same sentence the room is hearing.
+  const es = new EventSource('/events');
+  es.addEventListener('answer', (e) => {
+    const d = JSON.parse(e.data);
+    $('current').textContent = d.text;
+  });
+  es.addEventListener('verdict', (e) => {
+    const d = JSON.parse(e.data);
+    $('current').textContent = 'BLAMED: ' + d.culprit;
+    if (d.culprit === me) toast('You have been blamed. Redeem yourself.');
+  });
+
+  if (me) { $('name').value = me; enter(me); }
+</script>
+</body>
+</html>
