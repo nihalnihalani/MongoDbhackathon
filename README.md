@@ -1,229 +1,261 @@
-# RECEIPTS
+<div align="center">
 
-**Persistent review confidence for coding-agent pull requests.**
+# 🧾 RECEIPTS
 
-> The reviewer dies. The lesson ships.
+### The reviewer dies. The lesson ships.
 
-RECEIPTS turns an operator-confirmed production failure into a durable review contract:
-the specific evidence every future change in that subsystem must carry. The
-reviewer process is disposable; the organization's lessons live in MongoDB and
-are enforced by its successor.
+*An operator-confirmed production failure becomes a durable review contract in MongoDB — and the reviewer's fresh successor enforces it with zero prior messages.*
 
-Built for the [MongoDB Persistent Context Sprint Hackathon](https://cerebralvalley.ai/e/persistent-context-sprint-hackathon).
+<br/>
 
-## The idea
+[![MongoDB Persistent Context Sprint Hackathon](https://img.shields.io/badge/MongoDB%20Persistent%20Context%20Sprint-Cerebral%20Valley%20%C2%B7%20SF-00ED64?style=for-the-badge&logo=mongodb&logoColor=white)](https://cerebralvalley.ai/e/persistent-context-sprint-hackathon)
+[![Theme](https://img.shields.io/badge/Theme-No%20Cold%20Start-8B5CF6?style=for-the-badge)](#-what-it-is)
+[![Status](https://img.shields.io/badge/status-live%20demo%20%2B%20fixture%20UI-2EA043?style=for-the-badge)](#-two-surfaces)
 
-Code-review agents usually start each session cold. A reviewer can miss a bug,
-observe the incident later and still make the same mistake after it restarts.
-RECEIPTS closes that loop:
+*Pier 48, San Francisco · `.local` Build Fest · August 13, 2026*
+
+<br/>
+
+**Powered by**
+
+[![MongoDB Atlas](https://img.shields.io/badge/MongoDB%20Atlas-change%20streams%20%C2%B7%20%24vectorSearch%20%C2%B7%20transactions-47A248?style=flat-square&logo=mongodb&logoColor=white)](https://www.mongodb.com/atlas)
+[![Fireworks](https://img.shields.io/badge/Fireworks-standard%20review%20lane-FF5A00?style=flat-square)](https://fireworks.ai)
+[![OpenRouter](https://img.shields.io/badge/OpenRouter-deep%20review%20lane-6467F2?style=flat-square)](https://openrouter.ai)
+
+**Stack**
+
+[![Node.js](https://img.shields.io/badge/Node.js-20.19+-339933?style=flat-square&logo=nodedotjs&logoColor=white)](https://nodejs.org)
+[![Express](https://img.shields.io/badge/Express-5-000000?style=flat-square&logo=express&logoColor=white)](https://expressjs.com)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://typescriptlang.org)
+[![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vite.dev)
+[![Embeddings](https://img.shields.io/badge/Embeddings-Xenova%20MiniLM--L6--v2%20(local)-FFD21E?style=flat-square)](https://huggingface.co/Xenova/all-MiniLM-L6-v2)
+
+</div>
+
+---
+
+## 🎯 What it is
+
+Code-review agents start every session cold. A reviewer approves a bug, the bug ships, the incident happens — and after a restart that same reviewer makes the same mistake, because the lesson lived in a conversation that no longer exists. RECEIPTS moves the lesson out of the process and into the database:
 
 ```text
-PR ships
-  -> production evidence fails
-  -> operator confirms the PR-to-incident linkage
-  -> MongoDB publishes a review contract
-  -> every later PR in that subsystem must provide the missing evidence
+PR ships → canary fails in production → operator confirms the causal linkage
+        → one transaction publishes a review contract
+        → every later PR in that subsystem must carry the missing evidence
 ```
 
-This is not a global developer score. Contributors in the demo are coding
-agents, and their displayed standing is scoped to `contributor x subsystem`:
-`unknown`, `building`, `proven` or `proof-debt`. Enforcement is organizational:
-a confirmed payments failure creates a payments safeguard for every future
-payments PR, regardless of author.
+The reviewer is deliberately disposable. Kill it mid-demo and its successor boots with **zero prior messages**, reads the contract from MongoDB, and blocks a PR that its predecessor would have waved through. That behavioral delta — not a longer prompt — is the whole claim.
 
-## One-minute demo
+**How it frames people.** RECEIPTS allocates scrutiny; it does not score humans.
 
-1. `agent-kevin` submits PR #481, a payment-rounding change. With no relevant
-   history or active contract, reviewer #1 gives it the standard review.
-2. The operator ships it. An executable demo canary runs the function and catches
-   `roundMoney(1.005) -> 1.00` instead of `1.01`.
-3. The operator confirms the causal linkage. One MongoDB transaction records
-   Incident #41, marks the receipt failed and publishes:
-   `payments/rounding -> boundary-case test required`.
-4. Reviewer #1 is killed. The stage shows it dead.
-5. Reviewer #2 starts with zero prior messages. It reads the contract from
-   MongoDB and blocks similar PR #482 because the evidence is missing.
-6. An unrelated documentation PR from `agent-maya` passes normally.
-7. The operator claims the boundary-test evidence key and attaches corrected
-   rounding code to #482. The successor executes the PR's predeclared canary
-   cases, re-reviews it, records the contract as satisfied and unlocks it.
-
-## Why MongoDB is load-bearing
-
-| Capability | Role in RECEIPTS |
+| Rule | What it means |
 |---|---|
-| Documents | Store PR receipts, confirmed incidents, review contracts, contributor identities and reviewer generations. |
-| Atlas Vector Search | Retrieve semantically related incidents to choose review depth and give the selected model relevant failure history. Similarity is context, never proof of fault. |
-| Transactions | Atomically create the incident, mark the PR outcome failed and publish the future review contract. |
-| Change streams | Wake the disposable reviewer for submitted PRs and drive the stage UI from database changes. |
-| Aggregation and `$lookup` | Derive explainable `contributor x subsystem` standing from outcomes and open proof debt. |
-| Unique indexes and counters | Keep PR and incident identities stable across processes and restarts. |
+| 🎯 **Scrutiny allocation** | Output is *review depth*, scoped `contributor × subsystem` — never a reputation number, never a global developer score. |
+| ❓ **Unknown by default** | States are `unknown · building · proven · proof-debt`. No evidence ≠ trusted, and ≠ suspect. |
+| 🏛️ **Organizational, not personal** | A confirmed payments failure guards *every* future payments PR, regardless of author. |
+| ↩️ **Recovery is always open** | Proof debt is paid down by executed evidence; contracts unlock. |
 
-The persistent context changes an action rather than merely filling a prompt:
-reviewer #2 deterministically blocks a PR that reviewer #1 would have allowed.
+---
 
-## Architecture
+## 🏗️ Architecture
 
 ```mermaid
 flowchart LR
-    O[Operator console] -->|submit / ship / confirm| API[Express API]
-    API --> C[Demo canary]
-    C -->|result| API
-    API --> DB[(MongoDB Atlas)]
-    DB -->|PR change stream| R[Disposable reviewer]
-    R -->|active contracts + vector incidents| DB
-    R -->|standard or history-triggered deep review| LLM[Selected provider<br/>Fireworks or OpenRouter]
-    R -->|verdict + contract satisfaction| DB
-    DB -->|change streams| S[Stage screen]
+    subgraph SURF["🖥️ Surfaces"]
+        direction TB
+        OP["Operator console<br/><i>public/index.html</i>"]
+        ST["Stage screen<br/><i>public/stage.html</i>"]
+        WEB["Product-vision UI<br/><i>web/ · React · fixtures</i>"]
+    end
+
+    API["⚙️ Express API<br/>submit · ship · confirm · evidence<br/>SSE fan-out"]
+    CAN["🐤 Canary<br/><b>executes the PR's function</b><br/>roundMoney(1.005) → 1.00 ❌"]
+
+    subgraph ATLAS["🍃 MongoDB Atlas"]
+        direction TB
+        DB[("pr_receipts · incidents<br/>review_contracts · contributors<br/>counters · reviewer_status")]
+        VEC{{"$vectorSearch<br/>384-dim cosine"}}
+    end
+
+    subgraph REV["♻️ Disposable reviewer (generation N — killed and replaced on stage)"]
+        direction TB
+        GATE["1 · Contract gate<br/><b>before any LLM call</b>"]
+        DEPTH["2 · Depth select<br/>similarity ≥ 0.75 → escalate"]
+        LLM["3 · Review<br/>Fireworks │ OpenRouter<br/><i>labeled template fallback</i>"]
+    end
+
+    OP -->|"submit / ship / confirm"| API
+    API --> CAN --> API
+    API --> DB
+    DB ==>|"🔔 change stream — the ONLY wake signal"| GATE
+    GATE -->|"unmet contract"| BLK["⛔ deterministic block"]
+    GATE -->|"clear"| DEPTH
+    VEC -.->|"related incidents"| DEPTH
+    DB --- VEC
+    DEPTH --> LLM
+    LLM -->|"verdict + contract satisfaction"| DB
+    BLK --> DB
+    DB -->|"change streams → SSE"| ST
+    DB -.->|"not yet wired"| WEB
+
+    classDef mongo fill:#0d2818,stroke:#00ED64,color:#fff
+    classDef rev fill:#1a1a2e,stroke:#8B5CF6,color:#fff
+    class DB,VEC mongo
+    class GATE,DEPTH,LLM,BLK rev
 ```
 
-Reviews have two depths, both handled by the configured provider:
+### Contract lifecycle
 
-- **Standard:** ordinary PRs without relevant incident history receive fast triage.
-- **Deep:** PRs in contract-bearing subsystems or with a high-similarity incident
-  match receive the incident-aware prompt and executed evidence.
-
-An unmet review contract blocks before either model is called. Both model lanes
-have a visibly labeled template fallback so an unavailable partner API cannot
-silently determine the demo outcome. Embeddings run locally with
-`Xenova/all-MiniLM-L6-v2`; prewarm the model once while online so it is cached
-before relying on offline inference.
-
-## Two implementation surfaces
-
-The repository contains two complementary pieces:
-
-- **`receipts/` is the canonical hackathon demo.** It owns MongoDB persistence,
-  incident confirmation, review contracts, process restart and the live operator
-  and stage screens described above.
-- **The root TypeScript package is an autonomous inference harness.** It runs a
-  bounded, provider-neutral investigation loop over a `ReviewDataSource`, with
-  Fireworks and OpenRouter adapters plus snapshot fixtures. It persists its own
-  learned credibility and memories across runs in an atomic local JSON state
-  file. It does not yet read from RECEIPTS, MongoDB or GitHub and it does not
-  enforce review contracts.
-
-The intended integration boundary is narrow: RECEIPTS remains authoritative for
-causal confirmation and deterministic contract enforcement, while the root
-harness can later become the richer autonomous reviewer after those checks pass.
-See [`docs/agent-harness.md`](docs/agent-harness.md) for its event schema,
-provider configuration and adapter contract.
-
-Run the standalone inference harness from the repository root:
-
-```bash
-npm install
-export MURMUR_PROVIDER=fireworks # or openrouter
-export FIREWORKS_API_KEY=...    # or OPENROUTER_API_KEY
-npm test
-npm run agent -- --event examples/pr-event.json --snapshot examples/review-snapshot.json
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> Submitted: agent opens PR
+    Submitted --> Reviewed: reviewer no.1 · standard lane
+    Reviewed --> Shipped: operator ships
+    Shipped --> CanaryRed: canary executes fn ❌
+    CanaryRed --> Confirmed: operator confirms linkage
+    Confirmed --> Published: 🔒 one transaction<br/>incident + failed outcome + contract
+    Published --> Blocked: reviewer no.2 (0 messages)<br/>blocks PR 482
+    Blocked --> Satisfied: evidence attached<br/>canary re-executed ✅
+    Satisfied --> [*]: unlocked · proof debt paid
+    note right of Published
+        reviewer no.1 is killed here.
+        Nothing in memory survives.
+    end note
 ```
 
-It reads environment variables from the shell, writes its structured result to
-stdout and stores learned context in `.murmur/agent-state.json` by default. This
-proves persistent model learning locally, but it is not the MongoDB-backed
-persistent-context demo.
+---
 
-## Run locally
+## 🍃 Why MongoDB is load-bearing
 
-Prerequisites:
+Not a datastore behind the demo — the demo *is* MongoDB behaviors. Every row is verifiable in source.
 
-- Node.js 20.19 or newer
-- A MongoDB Atlas deployment that supports Atlas Vector Search
-- A dedicated demo database: the seed and proof commands reset RECEIPTS
-  collections
+| MongoDB capability | Load-bearing role | Source |
+|---|---|---|
+| **Change streams** | The reviewer's **sole** wake signal. No polling loop exists anywhere. Kill the process; the successor resumes from the DB and drains `status: submitted` first. | `receipts/src/reviewer.js:104` |
+| **Atlas Vector Search** | `$vectorSearch` over incident embeddings; similarity **≥ 0.75** escalates the PR from standard to deep review. Persistent context changes an *action*, not just a prompt. | `receipts/src/ops.js:37`, `receipts/src/reviewer.js:52` |
+| **Transactions** | Incident + failed PR outcome + the future review contract commit atomically in one `session.withTransaction`. A lesson is never half-published. | `receipts/src/ops.js:97` |
+| **Deterministic enforcement** | The contract gate runs **before any LLM call**. Reviewer #2 blocking PR #482 is database enforcement, not model judgment. | `receipts/src/reviewer.js:29` |
+| **Aggregation + `$lookup`** | Explainable `contributor × subsystem` standing derived from outcomes joined against open proof debt — `unknown` is the default. | `receipts/src/ops.js:143` |
+| **Atomic counters** | `nextSeq` keeps PR, incident, and **reviewer generation** identity stable across process restarts. Each restart is a new generation with `msgCount: 0`. | `receipts/src/schema.js:35`, `receipts/src/reviewer.js:85-96` |
+| **Programmatic search index** | The 384-dim cosine vector index is created from application code at startup. | `receipts/src/schema.js:58-63` |
+
+Embeddings run **locally** (`Xenova/all-MiniLM-L6-v2`, 384-dim) — no embedding API, so retrieval survives venue wifi. Both LLM lanes fall back to a **visibly labeled** template verdict (`REVIEW_LLM=off`), so a partner API being down can never silently decide the demo.
+
+---
+
+## ⏱️ The one-minute demo
+
+| # | Beat | What proves it |
+|---|---|---|
+| 1 | `agent-kevin` submits **PR #481**, a payment-rounding change. No history, no contract → reviewer #1 gives it the **standard** review. | Baseline: the cold reviewer approves. |
+| 2 | Operator ships it. The canary **executes the function** and catches `roundMoney(1.005) → 1.00` instead of `1.01`. | Real execution, not a scripted string. |
+| 3 | Operator confirms the causal linkage. **One transaction** writes Incident #41, marks the receipt failed, and publishes `payments/rounding → boundary-case test required`. | Atomic lesson. |
+| 4 | **Reviewer #1 is killed on stage.** The stage screen shows it dead. | The process is disposable. |
+| 5 | Reviewer #2 boots with **zero prior messages**, reads the contract from MongoDB, and **blocks PR #482**. | 🎯 *The kill shot.* Same input, different action — because of the database. |
+| 6 | An unrelated docs PR from `agent-maya` passes normally. | Not a blunt lockdown. |
+| 7 | Operator attaches boundary-test evidence + corrected code. The successor **re-executes** the predeclared canary cases, records the contract satisfied, and unlocks. | Recovery is real and evidence-gated. |
+
+---
+
+## 🖥️ Two surfaces
+
+| Surface | Path | What it is |
+|---|---|---|
+| **Canonical demo** | `receipts/public/` | The operator console (numbered controls) and the live stage screen. Backed by real MongoDB writes and driven by change streams over SSE. **This is what runs on stage.** |
+| **Product vision** | `receipts/web/` | React 19 + TypeScript strict + Vite 8 + Tailwind v4. Routes: `/` Courtroom (live stream), `/contributor/:id` Dossier, `/review/:id` Case File, with a control-condition compare at `/review/rev-512`. Dark/light, WCAG AA tokens, `prefers-reduced-motion` parity. Design spec: [`receipts/web/DESIGN.md`](receipts/web/DESIGN.md) — *"a microfiche reader in a dark evidence room."* |
+
+**Honest boundary:** the React UI runs on **fixture replay** and is not yet wired to the MongoDB API — it renders the product this becomes, not live data. The mechanics claims in this README are all proven by the `public/` demo and the source referenced above.
+
+---
+
+## 🚀 Run locally
+
+**Prerequisites:** Node.js 20.19+, a MongoDB Atlas deployment with Atlas Vector Search, and a **dedicated demo database** — seed and verify reset RECEIPTS collections.
 
 ```bash
 cd receipts
 npm install
-cp .env.example .env
+cp .env.example .env     # set MONGODB_URI, MONGODB_DB, REVIEW_PROVIDER + its API key
+npm run seed             # deterministic demo history
 ```
 
-Set `MONGODB_URI`, `MONGODB_DB`, and `REVIEW_PROVIDER` in `.env`, then add the
-selected provider's API key for live model reviews. Set `REVIEW_LLM=off` for
-deterministic template reviews.
-
-Seed the demo once:
+Then two long-lived processes in separate terminals:
 
 ```bash
-npm run seed
+npm run server           # http://localhost:4000
+```
+```bash
+npm run reviewer         # generation N — 0 prior messages
 ```
 
-Then run two long-lived processes in separate terminals:
+Open the **operator console** at `http://localhost:4000/` and the **stage** at `http://localhost:4000/stage.html`. Follow the numbered controls; at step 4, `Ctrl-C` the reviewer and run `npm run reviewer` again to create a fresh generation.
+
+<details>
+<summary><b>Optional checks & the product-vision UI</b></summary>
 
 ```bash
-npm run server
+npm test                 # node --test test/*.test.js
+npm run llm-smoke        # provider reachability
+npm run verify           # ⚠️ DESTRUCTIVE: drops + reseeds all RECEIPTS collections
+cd web && npm install && npm run dev   # fixture-driven React UI, zero backend needed
 ```
 
-```bash
-npm run reviewer
-```
+Set `REVIEW_LLM=off` for fully deterministic template verdicts. Prewarm the local embedding model once while online so it is cached before you rely on offline inference.
 
-Open:
+</details>
 
-- Operator console: `http://localhost:4000/`
-- Stage screen: `http://localhost:4000/stage.html`
+---
 
-Follow the numbered operator controls. At step 4, stop the reviewer with
-`Ctrl-C`, then run `npm run reviewer` again to create a new generation with zero
-conversation history.
+## 🛡️ Production readiness
 
-Optional checks:
+Honest scope. What ships on stage vs. what a real deployment needs:
 
-```bash
-npm run llm-smoke
-npm run verify
-```
+| Area | Demo scope today | Production needs |
+|---|---|---|
+| **Canary execution** | `new Function()` — flagged demo-scoped in code; input is authored by the operator at a local console. | A real sandbox (isolate/container) before any untrusted submitter. `receipts/src/ops.js:50` |
+| **API surface** | No auth, no input-validation layer on the Express API. | AuthN/Z on every mutating route, schema validation, rate limits. |
+| **Reviewer availability** | Single-reviewer singleton heartbeat; change stream has **no resume tokens** (process exits on stream error). | Resume tokens, leader election, backoff + replay from the last token. |
+| **Known logic gap** | Contract satisfaction is recorded *before* the verdict is known. | Record satisfaction only on a passing verdict. `receipts/src/reviewer.js:44-48` |
+| **Source of truth** | GitHub is simulated through the operator console. | GitHub App + webhooks; PR checks backed by verified CI artifacts. |
+| **Evidence** | An evidence key plus optional corrected code, re-executed by the canary. | Independently verified CI test artifacts, signed. |
+| **Vector failure mode** | Retrieval errors fall back to "no similar incidents," which can select the standard lane. | Fail **closed** or alert visibly — never silently downgrade scrutiny. |
+| **Adjudication** | Any operator can confirm a PR→incident linkage; `/confirm` does not enforce that the PR shipped and its canary failed. | Authenticated incident adjudication with an audit trail and state preconditions. |
 
-`npm run verify` deletes and reseeds all RECEIPTS collections in the configured
-database. Use a dedicated test/demo database, never a shared environment.
+Standing explains history — it never grants bypasses or reduces baseline review protection.
 
-## Repository layout
+---
+
+## 📂 Repository layout
 
 ```text
-src/                  # standalone TypeScript inference harness
-test/                 # harness and provider tests
-docs/agent-harness.md # harness integration guide
-examples/             # snapshot event and review data
-receipts/
-  public/
-    index.html       # numbered operator console
-    stage.html       # live stage visualization
-  src/
-    schema.js        # collections, indexes and Atlas Vector Search index
-    ops.js           # PR, canary, incident, evidence and standing operations
-    reviewer.js      # disposable change-stream reviewer worker
-    llm.js           # Interchangeable Fireworks/OpenRouter provider and review depths
-    server.js        # HTTP API, SSE and UI change streams
-    seed.js          # deterministic demo history
-    proof.js         # destructive DB-backed mechanics proof harness
+MongoDbhackathon/
+├── receipts/                  ← the hackathon demo (canonical)
+│   ├── public/
+│   │   ├── index.html         ← numbered operator console
+│   │   └── stage.html         ← live stage visualization
+│   ├── src/                   ← schema · ops · reviewer · embed · llm · server · seed · proof
+│   ├── web/                   ← product-vision React UI (fixture replay) + DESIGN.md
+│   └── test/                  ← llm.test.js
+├── src/ · test/ · examples/   ← standalone TS inference harness (not yet wired to MongoDB — see docs/agent-harness.md)
+└── PLAN.md                    ← implementation contract, state transitions, hardening
 ```
 
-See [PLAN.md](PLAN.md) for the implementation contract, state transitions,
-demo timing and remaining hardening work.
+---
 
-## Prototype boundaries
+## 🏆 The hackathon
 
-This hackathon build is intentionally honest about its scope:
+**[MongoDB Persistent Context Sprint Hackathon](https://cerebralvalley.ai/e/persistent-context-sprint-hackathon)** — Cerebral Valley · Pier 48, San Francisco · `.local` Build Fest · August 13, 2026. Theme: **No Cold Start**.
 
-- PRs, shipping and canaries are synthetic local demo operations; GitHub and CI
-  webhooks are not integrated yet.
-- Embeddings retrieve candidate analogues. They do not assign fault. An operator
-  explicitly confirms the incident linkage.
-- Submitted evidence is currently an evidence key plus optional corrected code,
-  not an independently verified test artifact.
-- The numbered UI establishes the intended sequence, but `/confirm` does not yet
-  enforce that the PR was shipped and its canary failed.
-- `npm run verify` exercises the core database and reviewer mechanics in one
-  process; the manual demo is what proves actual OS-process death and restart.
-- Vector retrieval errors currently fall back to no similar incidents, which can
-  select the standard lane. This must fail closed or alert visibly in production.
-- Demo code is executed with `new Function` and must not accept untrusted input
-  without a real sandbox.
-- Contributor standing explains history but does not grant bypasses or reduce
-  baseline review protections.
+Judged on Creativity (35%) · Technologies (25%) · Impact (20%) · Demo (20%). RECEIPTS uses MongoDB Atlas, Fireworks, and OpenRouter — the partners that are actually in the code.
 
-The production direction is GitHub checks backed by verified CI artifacts,
-authenticated incident adjudication and sandboxed execution. The hackathon
-proof is narrower: **a lesson learned by one reviewer changes what its fresh
-successor is allowed to approve.**
+**Built by** [@nihalnihalani](https://github.com/nihalnihalani) · [@lachenbach](https://github.com/lachenbach) (Liam Achenbach) · [@gorajing](https://github.com/gorajing) (Jin Choi)
+
+---
+
+<div align="center">
+
+**🧾 RECEIPTS — the reviewer dies, the lesson ships.**
+
+</div>
