@@ -386,7 +386,11 @@ export function CaseFile() {
           <Prose text={data.belief} />
         </Section>
 
-        {data.diff && (
+        {/* The comparison above renders this same hunk as its shared diff, and
+            showing it twice invites the reader to check whether the two copies
+            match — which is precisely the doubt the single shared diff exists to
+            remove. */}
+        {data.diff && !(data.controlOf && comparing) && (
           <Section id="hunk" label="The code in question" hint={data.diff.claim}>
             <DiffHunk hunk={data.diff} />
           </Section>

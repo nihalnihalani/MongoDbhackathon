@@ -66,7 +66,10 @@ export const contributors: Contributor[] = [
     id: 'marcus',
     name: 'Marcus Bell',
     credibility: 67,
-    trend: [78, 76, 77, 72, 73, 70, 71, 69, 70, 68, 67],
+    // The recovery arc: down into the suspect band on two attributed cache
+    // incidents, then earned back. This is the only proof in the fixture that
+    // the score is climbable, which is the first thing a sceptic asks.
+    trend: [58, 58, 55, 49, 41, 41, 48, 52, 57, 62, 67],
     band: 'watch',
     subsystem: 'core',
   },
@@ -97,7 +100,9 @@ The pattern is that he reasons about the happy path with real care and does not 
 
 I also hold a grudge that is properly mine, not his: I approved #481. My review said "cleanup logic is straightforward, no concerns." The incident that followed was mine to catch and I did not catch it. So my scrutiny of his auth work is now maximum, and it will stay maximum until I have three consecutive clean auth changes from him — not three clean PRs, three clean *auth* PRs. He is at one. PR #433 was genuinely good work and I said so.
 
-This is recoverable. It is not currently recovered.`,
+This is recoverable, and I mean that as a statement of fact rather than encouragement. Marcus Bell was at 41 in core last year on two attributed incidents; he is at 67 now and back to normal scrutiny, because he started shipping the evidence with the change instead of leaving me to find it. The path out is not charm and it is not time served. It is three clean auth PRs.
+
+It is not currently recovered.`,
   history: [
     {
       prId: 'pr-481',
@@ -345,6 +350,107 @@ Scrutiny elevated, not maximum. This is a course-correction note, not a grudge.`
   ],
 }
 
+/**
+ * The recovery case.
+ *
+ * Every other dossier here shows the score going down or staying high. Marcus is
+ * the one that went into the suspect band and came back out, and the ledger has
+ * to make that legible as EARNED rather than forgiven — three consecutive
+ * positive rows, each naming what he actually changed.
+ *
+ * Without this file the honest answer to "has anyone ever climbed back?" is
+ * "no", and a credibility system that only ratchets downward is a blacklist.
+ */
+const marcusDetail: ContributorDetail = {
+  ...contributors[4]!,
+  assessment: `Marcus Bell is the reason I can say that this score is climbable rather than permanent, so I want the record to be specific about how he did it.
+
+Fifteen months ago he was at 41 in core — suspect band, below Kevin's current number. Two cache-invalidation incidents were attributed to him in the same quarter, both the same shape: correct logic, no test, failure only under a concurrency the tests never constructed. I set his scrutiny to maximum and I was right to.
+
+What changed is not that he started writing better code. His code was always correct. What changed is that he started shipping the evidence with it. PR #490 arrived with a table-driven suite covering the exact concurrency case that caused the second incident. #501 covered the retry path. #516 covered the boundary I would have asked about, before I asked. He moved the verification burden off me and onto CI, which is the only thing that was ever costing him credibility.
+
+He is at 67 and his scrutiny came down to normal four reviews ago. I am recording that transition deliberately: scrutiny is a response to evidence, and when the evidence changes the response has to change with it, or it is not a judgment, it is a grudge.`,
+  ledger: {
+    subsystem: 'core',
+    openingBalance: 58,
+    balance: 67,
+    entries: [
+      { prId: 'pr-462', delta: -9, reason: 'cache invalidation shipped untested — INC-2088 attributed' },
+      { prId: 'pr-474', delta: -8, reason: 'second incident, same class — INC-2103 attributed' },
+      { prId: 'pr-490', delta: 7, reason: 'table-driven tests covering the incident case', recovery: true },
+      { prId: 'pr-501', delta: 9, reason: 'retry path tested without being asked', recovery: true },
+      { prId: 'pr-516', delta: 10, reason: 'third clean ship — scrutiny returned to normal', recovery: true },
+    ],
+  },
+  history: [
+    {
+      prId: 'pr-516',
+      title: 'Concurrent write guard on the settings cache',
+      delta: 10,
+      reason: 'Third consecutive tested change. Scrutiny returned to normal on this one.',
+      at: ago(5),
+    },
+    {
+      prId: 'pr-501',
+      title: 'Retry failed invoice generation',
+      delta: 9,
+      reason: 'Retry path covered by tests before review. I verified by running, not reading.',
+      at: ago(19),
+    },
+    {
+      prId: 'pr-490',
+      title: 'Tax rate resolution by region',
+      delta: 7,
+      reason: 'Table-driven suite covering the exact case that caused INC-2103',
+      at: ago(34),
+    },
+    {
+      prId: 'pr-474',
+      title: 'Currency rounding on line items',
+      delta: -8,
+      reason: 'Second untested cache path in a quarter — INC-2103 attributed at 0.88',
+      at: ago(61),
+    },
+    {
+      prId: 'pr-462',
+      title: 'Proration on mid-cycle plan change',
+      delta: -9,
+      reason: 'Correct as written, entirely untested — INC-2088 attributed at 0.91',
+      at: ago(79),
+    },
+  ],
+  memories: [
+    {
+      id: 'mem-m-01',
+      text: 'Marcus went from 41 to 67 in core over five reviews. He did not start writing more correct code — his code was already correct. He started shipping tests with it, which moved the verification burden off me. That is the whole delta.',
+      kind: 'self',
+      sourceId: 'marcus',
+      at: ago(5),
+    },
+    {
+      id: 'mem-m-02',
+      text: 'PR #490 arrived with a table-driven suite covering the exact concurrency case that caused INC-2103. Nobody asked for it. That is the review where I stopped reading his diffs line by line.',
+      kind: 'pr',
+      sourceId: 'pr-490',
+      at: ago(34),
+    },
+    {
+      id: 'mem-m-03',
+      text: 'INC-2103: settings cache served stale under concurrent writes. Attributed to PR #474 at 0.88 confidence. Second incident of the same class in one quarter — this is what took him to 41.',
+      kind: 'incident',
+      sourceId: 'inc-2103',
+      at: ago(61),
+    },
+    {
+      id: 'mem-m-04',
+      text: 'Standing rule, revised: Marcus is back to normal scrutiny after three consecutive tested changes. I am writing the revision down because the original rule is also written down, and a rule I quietly stop applying is worse than no rule.',
+      kind: 'self',
+      sourceId: 'marcus',
+      at: ago(5),
+    },
+  ],
+}
+
 function plainDetail(c: Contributor, assessment: string): ContributorDetail {
   return {
     ...c,
@@ -367,12 +473,9 @@ export const contributorDetails: Record<string, ContributorDetail> = {
   alice: aliceDetail,
   priya: plainDetail(
     contributors[3]!,
-    'Priya Raghunathan is trending toward the trusted band on the strength of consistently small, single-purpose pull requests. Nineteen reviews, no credibility losses, no incidents attributed. I have not yet reviewed her on the auth surface, so my confidence in this assessment is narrower than the number suggests.',
+    `Priya Raghunathan is trending toward the trusted band on the strength of consistently small, single-purpose pull requests. Nineteen reviews, no credibility losses, no incidents attributed.\n\nI have not yet reviewed her on the auth surface, so my confidence in this assessment is narrower than the number suggests.\n\nWorth stating plainly, because it is the rule and not a courtesy to her: a contributor I have no record of starts at normal scrutiny and gets verified like anyone else. Absence of history is not evidence of risk. I escalate on what someone has done, never on what I do not yet know about them.`,
   ),
-  marcus: plainDetail(
-    contributors[4]!,
-    'Marcus Bell is in a slow decline driven entirely by test coverage. His changes are correct; his changes are also consistently untested, which means I am verifying them by reading rather than by running. That costs credibility on every review because the risk lands on me instead of on CI.',
-  ),
+  marcus: marcusDetail,
 }
 
 /* =============================================================================
@@ -671,6 +774,12 @@ const detailById: Record<string, RawReviewDetail> = {
         'The rotation invalidates the old token before returning the new one, exactly as described. Approved at normal scrutiny after two actions. I want the record to show what that sentence costs: I read this diff for four minutes because of who sent it. The same change from a suspect-band author gets five actions and a critic.',
       at: ago(3),
     },
+    postedReview: {
+      url: 'https://github.com/acme/platform/pull/507',
+      body: `Approved. The rotation revokes the prior token before returning the new one, and the description matched the diff as it has sixty-one times.
+
+Recording for my own file that this was a normal-scrutiny read: two actions, one memory retrieved, no critic. The same change from a suspect-band author would not have got that, and the difference is my record of you, not the diff.`,
+    },
     memoryWritten:
       'PR #507: rotation ordering correct, description accurate, 62 of 62. Normal scrutiny remains appropriate for this author on auth.',
     credibilityDelta: 3,
@@ -680,7 +789,7 @@ const detailById: Record<string, RawReviewDetail> = {
   'rev-508': {
     ...summary('rev-508'),
     belief:
-      'Liam has credibility 118 — highest in the org, and his PR descriptions have matched the diff in 61 of 61 reviews. He describes this as a pure extraction with no behavior change. For this author only, I treat that as a prior and verify the claim rather than the whole surface.',
+      'Three hundred and twelve added lines across eleven files, and I am about to spend less time on this than I spent on Kevin\'s forty-line cleanup job. That is not carelessness. It is the lesson from INC-2291: I approved #481 in under a minute because it was small, and small was the wrong thing to measure. What I measure now is whether the author\'s account of the change has held. Liam\'s has, sixty-one times. So I verify the stated claim — pure extraction, no behavior change — instead of re-deriving the rate limiter from scratch.',
     actions: [
       {
         kind: 'fetch_diff',
@@ -703,7 +812,7 @@ const detailById: Record<string, RawReviewDetail> = {
     ],
     evidence: [
       {
-        memoryId: 'mem-l-03',
+        memoryId: 'mem-l-05',
         text: 'His PR descriptions have matched the diff in 61 of 61 reviews. I use the description as a prior for this author only.',
         similarity: 0.88,
         sourceId: 'liam',
@@ -712,11 +821,11 @@ const detailById: Record<string, RawReviewDetail> = {
     verdict: {
       decision: 'approved',
       reasoning:
-        'The extraction is faithful, every call site is migrated, and the description was accurate as it has been sixty-one times. Approved without comment. I am recording the accuracy again because that record is the only reason this review took four minutes instead of forty.',
+        'The extraction is faithful. Bucket math, key derivation, and eviction thresholds are byte-identical, and all seven call sites moved. Approved without comment. Eleven files and I did not escalate; forty lines from Kevin last week and I did. Anyone reading this record should understand that the difference is not the size of the change.',
       at: ago(2),
     },
     memoryWritten:
-      'PR #508: description accurate, 62 of 62. The prior holds. Continue reviewing this author by verifying the stated claim rather than re-deriving the whole surface.',
+      'PR #508: description accurate, 62 of 62. Large diff, normal scrutiny, no escalation — logged deliberately as a counterexample to my own #481 heuristic. Size is not the signal. The author\'s record is.',
     credibilityDelta: 3,
   },
   'rev-481': {
@@ -752,7 +861,7 @@ const detailById: Record<string, RawReviewDetail> = {
       at: ago(23),
     },
     memoryWritten:
-      'PR #481: small, linear cleanup job. Approved. Kevin trending back up — second consecutive clean change.',
+      'PR #481: small, linear cleanup job. Approved at +1 on the day. Nine days later INC-2291 was attributed here at 0.94 confidence and the score was revised to −7 retroactively — the delta you see on the ledger is the corrected one. Both numbers are real: I was right about the diff and wrong about the risk, and the gap between them is nine days long.',
     credibilityDelta: 1,
     diff: {
       file: 'src/auth/session.ts',
@@ -1038,6 +1147,24 @@ export const incidents: Incident[] = [
     attributedPrId: 'pr-481',
     attributedAuthorId: 'kevin',
     confidence: 0.94,
+  },
+  {
+    id: 'inc-2103',
+    title: 'Settings cache served stale under concurrent writes',
+    at: ago(61),
+    status: 'resolved',
+    attributedPrId: 'pr-474',
+    attributedAuthorId: 'marcus',
+    confidence: 0.88,
+  },
+  {
+    id: 'inc-2088',
+    title: 'Proration miscalculated on mid-cycle plan change',
+    at: ago(79),
+    status: 'resolved',
+    attributedPrId: 'pr-462',
+    attributedAuthorId: 'marcus',
+    confidence: 0.91,
   },
   {
     id: 'inc-2287',
