@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🧾 RECEIPTS
+# 🧾 PR-Elo
 
 ### The reviewer dies. The lesson ships.
 
@@ -31,7 +31,7 @@
 
 ## 🎯 What it is
 
-Code-review agents start every session cold. A reviewer approves a bug, the bug ships, the incident happens — and after a restart that same reviewer makes the same mistake, because the lesson lived in a conversation that no longer exists. RECEIPTS moves the lesson out of the process and into the database:
+Code-review agents start every session cold. A reviewer approves a bug, the bug ships, the incident happens — and after a restart that same reviewer makes the same mistake, because the lesson lived in a conversation that no longer exists. PR-Elo moves the lesson out of the process and into the database:
 
 ```text
 PR ships → canary fails in production → operator confirms the causal linkage
@@ -41,7 +41,7 @@ PR ships → canary fails in production → operator confirms the causal linkage
 
 The reviewer is deliberately disposable. Kill it mid-demo and its successor boots with **zero prior messages**, reads the contract from MongoDB, and blocks a PR that its predecessor would have waved through. That behavioral delta — not a longer prompt — is the whole claim.
 
-**How it frames people.** RECEIPTS allocates scrutiny; it does not score humans.
+**How it frames people.** PR-Elo allocates scrutiny; it does not score humans.
 
 | Rule | What it means |
 |---|---|
@@ -152,7 +152,7 @@ Embeddings run **locally** (`Xenova/all-MiniLM-L6-v2`, 384-dim) — no embedding
 
 ## 🚀 Run locally
 
-**Prerequisites:** Node.js 20.19+, a MongoDB Atlas deployment with Atlas Vector Search, and a **dedicated demo database** — seed and verify reset RECEIPTS collections.
+**Prerequisites:** Node.js 20.19+, a MongoDB Atlas deployment with Atlas Vector Search, and a **dedicated demo database** — seed and verify reset PR-Elo collections.
 
 ```bash
 cd receipts
@@ -178,7 +178,7 @@ Open the **operator console** at `http://localhost:4000/` and the **stage** at `
 ```bash
 npm test                 # node --test test/*.test.js
 npm run llm-smoke        # provider reachability
-npm run verify           # ⚠️ DESTRUCTIVE: drops + reseeds all RECEIPTS collections
+npm run verify           # ⚠️ DESTRUCTIVE: drops + reseeds all PR-Elo collections
 cd web && npm install && npm run dev   # fixture-driven React UI, zero backend needed
 ```
 
@@ -232,6 +232,6 @@ MongoDbhackathon/
 
 <div align="center">
 
-**🧾 RECEIPTS — the reviewer dies, the lesson ships.**
+**🧾 PR-Elo — the reviewer dies, the lesson ships.**
 
 </div>

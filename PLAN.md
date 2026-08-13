@@ -1,4 +1,4 @@
-# RECEIPTS — implementation-aligned plan
+# PR-Elo — implementation-aligned plan
 
 ## Product thesis
 
@@ -6,7 +6,7 @@
 > future change in that subsystem must satisfy, even after the reviewer agent
 > that missed the failure is dead.
 
-RECEIPTS is persistent organizational scar tissue for repositories filled with
+PR-Elo is persistent organizational scar tissue for repositories filled with
 coding agents. It remembers **what evidence the organization must require next
 time**, not which person deserves a permanent global score.
 
@@ -102,11 +102,11 @@ There are currently two runnable surfaces in the repository:
 | Surface | Implemented role | Current boundary |
 |---|---|---|
 | `receipts/` JavaScript app | Canonical hackathon demo: MongoDB state, review contracts, canary, disposable reviewer and live UI | Uses its own deterministic contract gate and standard/deep review functions |
-| Root TypeScript inference harness | Provider-neutral, bounded multi-turn investigation using Fireworks or OpenRouter over a `ReviewDataSource`; persists learned context across runs in local JSON | No MongoDB, GitHub or RECEIPTS adapter is wired |
+| Root TypeScript inference harness | Provider-neutral, bounded multi-turn investigation using Fireworks or OpenRouter over a `ReviewDataSource`; persists learned context across runs in local JSON | No MongoDB, GitHub or PR-Elo adapter is wired |
 
 The root harness preserves useful autonomous investigation work without changing
 the product contract. The integration target is to call it as the autonomous
-reviewer **after** RECEIPTS has checked binding review contracts. It must not own
+reviewer **after** PR-Elo has checked binding review contracts. It must not own
 operator confirmation, causal attribution or contract publication. Those remain
 deterministic, auditable application responsibilities.
 
@@ -123,13 +123,13 @@ learning across reviewer processes, not MongoDB-backed contract enforcement.
 - [x] Persist repository-scoped credibility and memories across local process restarts.
 - [x] Apply a completed event at most once and reject stale concurrent score updates.
 - [x] Keep current PR evidence separate from durable learned state.
-- [ ] Read RECEIPTS contracts, incidents and receipts through a real MongoDB adapter.
-- [ ] Treat operator-confirmed RECEIPTS contracts as binding constraints in the autonomous loop.
-- [ ] Publish autonomous review results into the RECEIPTS stage UI.
+- [ ] Read PR-Elo contracts, incidents and receipts through a real MongoDB adapter.
+- [ ] Treat operator-confirmed PR-Elo contracts as binding constraints in the autonomous loop.
+- [ ] Publish autonomous review results into the PR-Elo stage UI.
 - [ ] Search a real repository and execute tests in a sandbox.
 
 Local agent learning is advisory. It may change investigation depth, but it cannot
-create, satisfy or bypass a RECEIPTS contract. Binding behavior still comes only
+create, satisfy or bypass a PR-Elo contract. Binding behavior still comes only
 from operator-confirmed incidents committed through the MongoDB transaction.
 
 ## Data model
@@ -277,7 +277,7 @@ mechanics with `REVIEW_LLM=off`:
 - Corrected code and the claimed evidence key unlock #482.
 - Contract satisfaction removes the displayed open proof debt.
 
-The harness deletes all RECEIPTS collections before seeding. It must only run
+The harness deletes all PR-Elo collections before seeding. It must only run
 against a dedicated test/demo database. It does not launch two OS processes or
 exercise HTTP, SSE, change streams or browser UIs; the rehearsed manual demo is
 the process-death proof.
@@ -302,7 +302,7 @@ P0:
 
 - Commit and push the complete `receipts/` application with these canonical docs.
 - Keep the root inference harness clearly labeled as a separate, locally persisted
-  component until a real RECEIPTS data-source adapter is implemented.
+  component until a real PR-Elo data-source adapter is implemented.
 - Run `npm run verify` against a dedicated Atlas hackathon database.
 - Run `npm run llm-smoke` once with each `REVIEW_PROVIDER` and confirm both
   providers are visibly labeled.

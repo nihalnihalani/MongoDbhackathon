@@ -1,5 +1,5 @@
 {
-  "name": "receipts",
+  "name": "pr-elo",
   "version": "1.0.0",
   "description": "Persistent review confidence — the reviewer dies, the lesson ships.",
   "type": "module",

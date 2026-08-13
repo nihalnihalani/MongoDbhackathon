@@ -1,4 +1,4 @@
-# RECEIPTS — UI/UX Brief & API Contract
+# PR-Elo — UI/UX Brief & API Contract
 
 **Product one-liner:** An autonomous code-review agent that develops trust, suspicion, and grudges based on the long-term consequences of your code. The agent keeps receipts.
 

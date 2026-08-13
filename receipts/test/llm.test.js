@@ -7,7 +7,7 @@ process.env.FIREWORKS_MODEL = 'accounts/fireworks/models/test-model';
 process.env.OPENROUTER_API_KEY = 'openrouter-test-key';
 process.env.OPENROUTER_MODEL = 'anthropic/test-model';
 process.env.OPENROUTER_SITE_URL = 'https://receipts.test';
-process.env.OPENROUTER_APP_NAME = 'RECEIPTS Test';
+process.env.OPENROUTER_APP_NAME = 'PR-Elo Test';
 
 const { standardReview, deepReview } = await import('../src/llm.js');
 
@@ -49,7 +49,7 @@ test('Fireworks and OpenRouter can each run both review depths', async () => {
   assert.ok(calls.every((call) => JSON.parse(String(call.init.body)).response_format?.type === 'json_object'));
   const openRouterHeaders = new Headers(calls[2].init.headers);
   assert.equal(openRouterHeaders.get('HTTP-Referer'), 'https://receipts.test');
-  assert.equal(openRouterHeaders.get('X-OpenRouter-Title'), 'RECEIPTS Test');
+  assert.equal(openRouterHeaders.get('X-OpenRouter-Title'), 'PR-Elo Test');
 });
 
 test('invalid provider selection falls back loudly', async () => {

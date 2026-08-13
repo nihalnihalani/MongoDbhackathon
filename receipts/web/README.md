@@ -1,6 +1,6 @@
-# RECEIPTS — web
+# PR-Elo — web
 
-The front end for RECEIPTS: an autonomous code-review agent that develops trust,
+The front end for PR-Elo: an autonomous code-review agent that develops trust,
 suspicion, and grudges based on the long-term consequences of your code.
 
 The hero surface is **the agent thinking, live** — a streaming investigation
@@ -38,7 +38,7 @@ back to the top mid-read is worse than one that ends.
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| `VITE_API_BASE` | `http://localhost:3001` | Base URL of the RECEIPTS backend. |
+| `VITE_API_BASE` | `http://localhost:3001` | Base URL of the PR-Elo backend. |
 
 Copy `.env.example` to `.env` to override. The data layer probes the backend once
 per session; if it is unreachable, every route serves fixtures and no further

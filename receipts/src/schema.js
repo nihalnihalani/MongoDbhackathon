@@ -1,5 +1,5 @@
 /**
- * RECEIPTS — persistent review confidence.
+ * PR-Elo — persistent review confidence.
  *
  * Every merged PR leaves a receipt connecting author, subsystem, promised
  * safeguards and eventual production outcome. Confirmed failures create

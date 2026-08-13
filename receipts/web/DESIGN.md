@@ -1,4 +1,4 @@
-# RECEIPTS — Design Specification (v2)
+# PR-Elo — Design Specification (v2)
 
 **Owner:** design-director. **Audience:** frontend-builder. **Status:** implement as written; no clarifying questions needed.
 
@@ -598,7 +598,7 @@ Placement: side by side with the prose at `≥1024px` (prose left 55%, hunk righ
 ```
 ◈ POSTED TO GITHUB                    github.com/org/repo/pull/481 ↗
 ┌──────────────────────────────────────────────────────┐
-│  ● RECEIPTS-AGENT  commented 2 hours ago             │
+│  ● PR-ELO-AGENT  commented 2 hours ago               │
 │  ────────────────────────────────────────────────── │
 │  **Blocking.** This rotation issues a new refresh    │
 │  token but never invalidates the prior one…          │
@@ -678,7 +678,7 @@ Breakpoints `sm 480 / md 768 / lg 1024 / xl 1280`. Verified to **360px**.
 
 ```
 ┌───────────────────────────────────────────────────────────────────────────────┐
-│  RECEIPTS                     REPLAY · RECORDED 14:22   ▸ REPLAY    ☾/☀   │D│ │  ← rail tab,
+│  PR-Elo                       REPLAY · RECORDED 14:22   ▸ REPLAY    ☾/☀   │D│ │  ← rail tab,
 │  ──────────────────────────────────────────────────────────────────────  │O│ │    collapsed
 ├──────────────────────────────────────────────────────────────────────────│C│─┤
 │ ■ NOW INVESTIGATING                                                      │K│ │
@@ -858,7 +858,7 @@ A single vertical narrative, max 820px, readable top to bottom.
 │                                                                                │
 │  ◈ POSTED TO GITHUB                    github.com/org/repo/pull/481 ↗         │
 │  ┌──────────────────────────────────────────────────────┐                     │
-│  │ ● RECEIPTS-AGENT  commented 2 hours ago              │                     │  ← the external
+│  │ ● PR-ELO-AGENT  commented 2 hours ago                │                     │  ← the external
 │  │ ──────────────────────────────────────────────────── │                     │    artifact
 │  │ **Blocking.** This rotation issues a new refresh     │                     │
 │  │ token but never invalidates the prior one…           │                     │

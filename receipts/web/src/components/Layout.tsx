@@ -7,7 +7,7 @@ function Wordmark() {
     <Link
       to="/"
       className="flex min-w-0 items-baseline gap-2.5"
-      aria-label="RECEIPTS — go to the courtroom"
+      aria-label="PR-Elo — go to the courtroom"
     >
       <span
         className="display"
@@ -17,7 +17,7 @@ function Wordmark() {
           color: 'var(--ink)',
         }}
       >
-        RECEIPTS
+        PR-Elo
       </span>
       <span
         className="label hidden md:inline"
@@ -86,7 +86,7 @@ export function Layout() {
           className="mx-auto flex w-full flex-wrap items-center gap-x-4 gap-y-1"
           style={{ maxWidth: 'var(--content-max)' }}
         >
-          <span className="label">Receipts · autonomous review agent</span>
+          <span className="label">PR-Elo · autonomous review agent</span>
           <span className="label" style={{ color: 'var(--ink-3)' }}>
             Memory: MongoDB Atlas Vector Search
           </span>

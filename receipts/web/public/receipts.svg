@@ -3,6 +3,6 @@
   <g transform="rotate(-4 16 16)">
     <rect x="4.5" y="9.5" width="23" height="13" rx="1.5" fill="none" stroke="#F0553C" stroke-width="2.5" />
     <text x="16" y="19.4" text-anchor="middle" font-family="ui-monospace, Menlo, monospace"
-          font-size="9.5" font-weight="700" letter-spacing="0.5" fill="#F0553C">R</text>
+          font-size="8.5" font-weight="700" letter-spacing="0.5" fill="#F0553C">PR</text>
   </g>
 </svg>

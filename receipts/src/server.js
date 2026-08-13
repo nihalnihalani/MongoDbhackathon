@@ -100,7 +100,7 @@ async function main() {
   }, 2000);
 
   app.listen(PORT, () => console.log(
-    `RECEIPTS  console: http://localhost:${PORT}/   stage: http://localhost:${PORT}/stage.html`,
+    `PR-Elo  console: http://localhost:${PORT}/   stage: http://localhost:${PORT}/stage.html`,
   ));
 }
 

@@ -49,7 +49,7 @@ export function PostedReview({ review }: { review: PostedReviewData }) {
             }}
           />
           <span className="mono" style={{ fontSize: 'var(--fs-mono-sm)', color: 'var(--ink-2)' }}>
-            receipts-agent
+            pr-elo-agent
           </span>
           <span className="label">commented</span>
         </div>

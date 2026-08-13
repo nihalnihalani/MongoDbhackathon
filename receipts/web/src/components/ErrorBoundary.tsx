@@ -24,7 +24,7 @@ export class ErrorBoundary extends Component<Props, State> {
   override componentDidCatch(error: Error, info: ErrorInfo) {
     // A warning, not an error: the fault is handled and the console stays clean
     // of uncaught-error noise during a demo.
-    console.warn(`[receipts] ${this.props.surface} failed to render`, error, info.componentStack)
+    console.warn(`[pr-elo] ${this.props.surface} failed to render`, error, info.componentStack)
   }
 
   override render() {

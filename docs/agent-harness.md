@@ -134,7 +134,7 @@ npm run agent -- \
 
 Each event ID is applied at most once. Contributor learning is repository-scoped. Credibility commits use optimistic validation: if another run changed the durable score after the model read it, the stale proposal is rejected rather than overwriting newer learning. Writes use a same-directory temporary file and atomic rename.
 
-This store is for the standalone inference demo and development. RECEIPTS remains authoritative for MongoDB-backed, operator-confirmed incidents and binding subsystem review contracts. A model-proposed credibility change never creates or bypasses a RECEIPTS contract.
+This store is for the standalone inference demo and development. PR-Elo remains authoritative for MongoDB-backed, operator-confirmed incidents and binding subsystem review contracts. A model-proposed credibility change never creates or bypasses a PR-Elo contract.
 
 ## Adding a tool
 
