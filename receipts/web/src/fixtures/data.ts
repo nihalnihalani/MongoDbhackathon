@@ -11,6 +11,7 @@
 
 import type {
   Contributor,
+  DiffHunk,
   ContributorDetail,
   Incident,
   ReviewDetail,
@@ -35,6 +36,7 @@ export const contributors: Contributor[] = [
     credibility: 118,
     trend: [94, 97, 99, 103, 102, 106, 109, 108, 113, 115, 118],
     band: 'trusted',
+    subsystem: 'auth',
   },
   {
     id: 'alice',
@@ -42,6 +44,7 @@ export const contributors: Contributor[] = [
     credibility: 83,
     trend: [92, 91, 93, 88, 89, 85, 86, 81, 80, 82, 83],
     band: 'watch',
+    subsystem: 'caching',
   },
   {
     id: 'kevin',
@@ -49,6 +52,7 @@ export const contributors: Contributor[] = [
     credibility: 31,
     trend: [75, 75, 73, 55, 55, 43, 47, 47, 45, 39, 31],
     band: 'suspect',
+    subsystem: 'auth',
   },
   {
     id: 'priya',
@@ -56,6 +60,7 @@ export const contributors: Contributor[] = [
     credibility: 104,
     trend: [88, 90, 92, 95, 94, 97, 99, 101, 100, 102, 104],
     band: 'trusted',
+    subsystem: 'api',
   },
   {
     id: 'marcus',
@@ -63,6 +68,7 @@ export const contributors: Contributor[] = [
     credibility: 67,
     trend: [78, 76, 77, 72, 73, 70, 71, 69, 70, 68, 67],
     band: 'watch',
+    subsystem: 'core',
   },
 ]
 
@@ -71,6 +77,17 @@ export const contributors: Contributor[] = [
    ========================================================================== */
 
 const kevinDetail: ContributorDetail = {
+  ledger: {
+    subsystem: 'auth',
+    openingBalance: 64,
+    entries: [
+      { prId: 'pr-391', delta: -18, reason: 'Auth regression, shipped' },
+      { prId: 'pr-404', delta: -12, reason: 'Missing authz, two routes' },
+      { prId: 'pr-433', delta: 4, reason: 'Clean fix, tested', recovery: true },
+      { prId: 'pr-481', delta: -7, reason: 'Repeat of the #391 failure mode' },
+    ],
+    balance: 31,
+  },
   ...contributors[2]!,
   assessment: `I do not trust Kevin Brandt with authentication code, and I want to be precise about why, because the reason is not that he writes sloppy code in general.
 
@@ -85,7 +102,7 @@ This is recoverable. It is not currently recovered.`,
     {
       prId: 'pr-481',
       title: 'Session cleanup job for expired tokens',
-      delta: -14,
+      delta: -7,
       reason: 'Delayed failure INC-2291 attributed at 0.94 confidence — 9 days after merge',
       at: ago(9),
     },
@@ -109,13 +126,6 @@ This is recoverable. It is not currently recovered.`,
       delta: -18,
       reason: 'Auth regression reached production; expiry check dropped in refactor',
       at: ago(58),
-    },
-    {
-      prId: 'pr-377',
-      title: 'Move analytics batching to a worker queue',
-      delta: 2,
-      reason: 'Clean, well-scoped, outside the auth surface',
-      at: ago(71),
     },
   ],
   memories: [
@@ -165,6 +175,18 @@ This is recoverable. It is not currently recovered.`,
 }
 
 const liamDetail: ContributorDetail = {
+  ledger: {
+    subsystem: 'auth',
+    openingBalance: 106,
+    entries: [
+      { prId: 'pr-402', delta: 3, reason: 'Caught his own race condition in the session store' },
+      { prId: 'pr-428', delta: -3, reason: 'Unbounded introspection cache — self-reported' },
+      { prId: 'pr-452', delta: 5, reason: 'Corrected my mistaken verdict with a query plan', recovery: true },
+      { prId: 'pr-471', delta: 4, reason: 'Hardened session fixation checks on login' },
+      { prId: 'pr-507', delta: 3, reason: 'Refresh-token rotation, reviewed at normal scrutiny' },
+    ],
+    balance: 118,
+  },
   ...contributors[0]!,
   assessment: `Liam Ortega has the highest credibility in this organization and it was earned slowly, which is the only way it can be earned.
 
@@ -175,51 +197,72 @@ He is also the only contributor who has ever argued me out of a verdict with evi
 Scrutiny is normal and stays normal. I still read the auth-adjacent work carefully, because trust is about the person and vigilance is about the subsystem, and those are different things.`,
   history: [
     {
-      prId: 'pr-508',
-      title: 'Extract rate-limiter into shared package',
+      prId: 'pr-507',
+      title: 'Add refresh-token rotation to auth middleware',
       delta: 3,
-      reason: 'Clean extraction, migration path documented, zero behavior change as described',
-      at: ago(2),
+      reason: 'Rotation invalidates before it issues; description matched the diff, as always',
+      at: ago(3),
     },
     {
-      prId: 'pr-497',
-      title: 'Backfill org billing metadata',
-      delta: 2,
-      reason: 'Idempotent, dry-run mode included, rollback plan in the description',
-      at: ago(12),
+      prId: 'pr-471',
+      title: 'Harden session fixation checks on login',
+      delta: 4,
+      reason: 'Regenerated the session id on privilege change without being asked',
+      at: ago(16),
     },
     {
       prId: 'pr-452',
-      title: 'Batch org membership lookups',
+      title: 'Batch org membership lookups behind the authz filter',
       delta: 5,
       reason: 'Corrected my mistaken N+1 verdict with a query plan. Credit for the correction.',
       at: ago(33),
     },
     {
-      prId: 'pr-419',
-      title: 'Retry policy for webhook delivery',
+      prId: 'pr-428',
+      title: 'Token introspection endpoint',
       delta: -3,
-      reason: 'Unbounded retry on 4xx. He flagged it himself before I did.',
-      at: ago(47),
+      reason: 'Unbounded introspection cache. He flagged it himself before I did.',
+      at: ago(44),
+    },
+    {
+      prId: 'pr-402',
+      title: 'Session store migration',
+      delta: 3,
+      reason: 'Caught a race condition in his own change during review and fixed it pre-merge',
+      at: ago(57),
     },
   ],
   memories: [
     {
       id: 'mem-l-01',
       text: 'PR #452: I blocked on a suspected N+1 and Liam produced the query plan showing a single batched lookup. I was wrong. His technical pushback is evidence, not noise — weight it accordingly.',
-      kind: 'pr',
+      kind: 'self',
       sourceId: 'pr-452',
       at: ago(33),
     },
     {
       id: 'mem-l-02',
-      text: 'Liam self-reported the unbounded retry in #419 before my analysis surfaced it. Contributors who find their own bugs lose less credibility than contributors I have to catch.',
+      text: 'PR #402: Liam caught a race condition in his own session-store migration during review — two requests could both regenerate the session id — and fixed it before I reached that file. He finds his own bugs.',
       kind: 'pr',
-      sourceId: 'pr-419',
-      at: ago(47),
+      sourceId: 'pr-402',
+      at: ago(57),
     },
     {
       id: 'mem-l-03',
+      text: 'PR #471 regenerated the session id on privilege change without being asked. That is the fixation defence I would have had to request from anyone else on this surface.',
+      kind: 'pr',
+      sourceId: 'pr-471',
+      at: ago(16),
+    },
+    {
+      id: 'mem-l-04',
+      text: 'Liam self-reported the unbounded introspection cache in #428 before my analysis surfaced it. Contributors who find their own bugs lose less credibility than contributors I have to catch.',
+      kind: 'pr',
+      sourceId: 'pr-428',
+      at: ago(44),
+    },
+    {
+      id: 'mem-l-05',
       text: 'His PR descriptions have matched the diff in 61 of 61 reviews. I use the description as a prior for this author only. For everyone else I verify first.',
       kind: 'self',
       sourceId: 'liam',
@@ -229,6 +272,16 @@ Scrutiny is normal and stays normal. I still read the auth-adjacent work careful
 }
 
 const aliceDetail: ContributorDetail = {
+  ledger: {
+    subsystem: 'caching',
+    openingBalance: 86,
+    entries: [
+      { prId: 'pr-447', delta: -2, reason: 'Dependency bump bundled into a bugfix' },
+      { prId: 'pr-461', delta: 3, reason: 'Caught a DST boundary I did not think to ask about', recovery: true },
+      { prId: 'pr-486', delta: -4, reason: 'Bundled scope hid the cache change' },
+    ],
+    balance: 83,
+  },
   ...contributors[1]!,
   assessment: `Alice Nakamura sits in the watch band and the drift has been slow enough that I want to name it before it becomes a pattern I have to hold against her.
 
@@ -293,7 +346,19 @@ Scrutiny elevated, not maximum. This is a course-correction note, not a grudge.`
 }
 
 function plainDetail(c: Contributor, assessment: string): ContributorDetail {
-  return { ...c, assessment, history: [], memories: [] }
+  return {
+    ...c,
+    assessment,
+    history: [],
+    memories: [],
+    // No scored events yet, so the ledger opens and closes at the same balance.
+    ledger: {
+      subsystem: c.subsystem,
+      openingBalance: c.credibility,
+      entries: [],
+      balance: c.credibility,
+    },
+  }
 }
 
 export const contributorDetails: Record<string, ContributorDetail> = {
@@ -321,7 +386,7 @@ export const reviews: ReviewSummary[] = [
     title: 'Add refresh-token rotation to auth middleware',
     author: 'Kevin Brandt',
     authorId: 'kevin',
-    status: 'investigating',
+    status: 'blocked',
     scrutiny: 'maximum',
     startedAt: ago(0, 0),
   },
@@ -334,6 +399,16 @@ export const reviews: ReviewSummary[] = [
     status: 'investigating',
     scrutiny: 'elevated',
     startedAt: ago(0, 3),
+  },
+  {
+    id: 'rev-507',
+    prId: 'pr-507',
+    title: 'Add refresh-token rotation to auth middleware',
+    author: 'Liam Ortega',
+    authorId: 'liam',
+    status: 'approved',
+    scrutiny: 'normal',
+    startedAt: ago(3),
   },
   {
     id: 'rev-508',
@@ -387,9 +462,45 @@ export const reviews: ReviewSummary[] = [
   },
 ]
 
-const detailById: Record<string, ReviewDetail> = {
+/** Summaries are spread into their details by id — never by array position. */
+function summary(id: string): ReviewSummary {
+  const found = reviews.find((r) => r.id === id)
+  if (!found) throw new Error(`No review summary for "${id}"`)
+  return found
+}
+
+/**
+ * The control condition (DESIGN.md §8.7). This exact hunk arrives twice: from
+ * Liam on PR #507 and from Kevin on PR #512. Same input, different behaviour —
+ * memory is the only variable. It is declared once so the two cases cannot
+ * drift apart.
+ */
+const ROTATION_DIFF: DiffHunk = {
+  file: 'src/auth/refresh.ts',
+  prId: 'pr-512',
+  claim: 'The new token is issued before the old one is invalidated.',
+  lines: [
+    { n: 84, kind: 'context', text: 'export async function rotateRefreshToken(old: Token) {' },
+    { n: 85, kind: 'context', text: '  const next = await issueRefreshToken(old.userId)' },
+    { n: 86, kind: 'add', text: '  await sessions.attach(old.sessionId, next.id)' },
+    { n: 87, kind: 'add', text: '  return next' },
+    { n: 88, kind: 'remove', text: '  await revoke(old.id)' },
+    { n: 89, kind: 'remove', text: '  return next' },
+    { n: 90, kind: 'context', text: '}' },
+  ],
+}
+
+/**
+ * Written without the optional evidence fields, which are then defaulted in.
+ * Only the cases where a diff or a posted comment actually adds something
+ * carry one; the rest would just be decoration.
+ */
+type RawReviewDetail = Omit<ReviewDetail, 'postedReview' | 'diff'> &
+  Partial<Pick<ReviewDetail, 'postedReview' | 'diff' | 'controlOf'>>
+
+const detailById: Record<string, RawReviewDetail> = {
   'rev-512': {
-    ...reviews[0]!,
+    ...summary('rev-512'),
     belief:
       'Kevin has credibility 31 — suspect band, lowest in the org. This PR touches src/auth/session.ts, the same file PR #391 regressed. Three of his four credibility losses came from this subsystem, and the failure mode each time was state the tests never construct. I am reading this line by line and I am not extending benefit of the doubt.',
     actions: [
@@ -418,6 +529,14 @@ const detailById: Record<string, ReviewDetail> = {
         output: 'No test constructs a request arriving inside the rotation window. Same gap as #481.',
         at: ago(0, 0),
       },
+      {
+        kind: 'escalate',
+        label: 'Escalate to the OpenRouter critic',
+        output:
+          'Confirmed. A request arriving at line 87 with the old token succeeds and the rotation counter never increments — the old token stays valid indefinitely.',
+        at: ago(0, 0),
+        causedBy: ['mem-k-04', 'mem-k-01'],
+      },
     ],
     evidence: [
       {
@@ -439,12 +558,25 @@ const detailById: Record<string, ReviewDetail> = {
         sourceId: 'pr-404',
       },
     ],
-    verdict: null,
-    memoryWritten: null,
-    credibilityDelta: null,
+    diff: ROTATION_DIFF,
+    controlOf: 'rev-507',
+    verdict: {
+      decision: 'blocked',
+      reasoning:
+        'The old refresh token stays valid after rotation, so this reintroduces the exact defect that caused INC-2291. I approved that one in under a minute because the diff was forty lines. I am not doing it twice.',
+      at: ago(0, 0),
+    },
+    memoryWritten:
+      'PR #512: rotation issues before invalidating. Third instance of Kevin not reasoning about time in auth code. Scrutiny stays maximum.',
+    credibilityDelta: -7,
+    postedReview: {
+      body:
+        'Blocking. rotateRefreshToken() issues the replacement before revoking the original, so between line 84 and line 91 both tokens authenticate. This is the same window that produced INC-2291. Please revoke before returning, and add a test that sends the old token immediately after a rotation.',
+      url: 'https://github.com/acme/platform/pull/512#pullrequestreview-2310',
+    },
   },
   'rev-509': {
-    ...reviews[1]!,
+    ...summary('rev-509'),
     belief:
       'Alice has credibility 83 — watch band, drifting down on scope discipline rather than correctness. This PR invalidates a shared org-settings cache using a key derived from org.settingsVersion, which two other subsystems also write. That is not wrong today. It is the shape of a defect that surfaces three weeks after merge.',
     actions: [
@@ -485,8 +617,48 @@ const detailById: Record<string, ReviewDetail> = {
     memoryWritten: null,
     credibilityDelta: null,
   },
+  'rev-507': {
+    ...summary('rev-507'),
+    belief:
+      'Liam has credibility 118 in auth and has not regressed this subsystem in 40 pull requests. His description says the rotation invalidates before it issues. For this author I verify the stated claim rather than re-deriving the whole surface.',
+    actions: [
+      {
+        kind: 'fetch_diff',
+        label: 'Fetch diff',
+        output: '+218 −64 across 6 files · src/auth/session.ts, src/auth/refresh.ts, +4',
+        at: ago(3),
+      },
+      {
+        kind: 'verify_claim',
+        label: 'Verify rotation ordering',
+        output: 'revoke(old.id) precedes the return. No window where both tokens are live.',
+        at: ago(3),
+        causedBy: ['mem-l-05'],
+      },
+    ],
+    evidence: [
+      {
+        memoryId: 'mem-l-05',
+        kind: 'self',
+        text: 'His PR descriptions have matched the diff in 61 of 61 reviews. I use the description as a prior for this author only.',
+        similarity: 0.88,
+        sourceId: 'liam',
+      },
+    ],
+    verdict: {
+      decision: 'approved',
+      reasoning:
+        'The rotation invalidates the old token before returning the new one, exactly as described. Approved at normal scrutiny after two actions. I want the record to show what that sentence costs: I read this diff for four minutes because of who sent it. The same change from a suspect-band author gets five actions and a critic.',
+      at: ago(3),
+    },
+    memoryWritten:
+      'PR #507: rotation ordering correct, description accurate, 62 of 62. Normal scrutiny remains appropriate for this author on auth.',
+    credibilityDelta: 3,
+    diff: ROTATION_DIFF,
+    controlOf: 'rev-512',
+  },
   'rev-508': {
-    ...reviews[2]!,
+    ...summary('rev-508'),
     belief:
       'Liam has credibility 118 — highest in the org, and his PR descriptions have matched the diff in 61 of 61 reviews. He describes this as a pure extraction with no behavior change. For this author only, I treat that as a prior and verify the claim rather than the whole surface.',
     actions: [
@@ -528,7 +700,7 @@ const detailById: Record<string, ReviewDetail> = {
     credibilityDelta: 3,
   },
   'rev-481': {
-    ...reviews[3]!,
+    ...summary('rev-481'),
     belief:
       'Kevin has credibility 47. This is a 40-line cleanup job that deletes expired session rows on a cron. The diff is small and the logic is linear. Low risk.',
     actions: [
@@ -562,9 +734,27 @@ const detailById: Record<string, ReviewDetail> = {
     memoryWritten:
       'PR #481: small, linear cleanup job. Approved. Kevin trending back up — second consecutive clean change.',
     credibilityDelta: 1,
+    diff: {
+      file: 'src/auth/session.ts',
+      prId: 'pr-481',
+      claim:
+        'The expiry comparison moved from an absolute timestamp to a TTL computed from issue time, so a session refreshed before expiry never expires.',
+      lines: [
+        { n: 46, kind: 'context', text: 'export function isSessionValid(session: Session) {' },
+        { n: 47, kind: 'context', text: '  const now = Date.now()' },
+        { n: 48, kind: 'remove', text: '  return session.expiresAt > now' },
+        { n: 49, kind: 'add', text: '  return session.issuedAt + SESSION_TTL > now' },
+        { n: 50, kind: 'context', text: '}' },
+      ],
+    },
+    postedReview: {
+      body:
+        'Approved. Cleanup logic is straightforward, no concerns — the delete predicate is correct and expires_at is indexed.',
+      url: 'https://github.com/acme/platform/pull/481#pullrequestreview-2201',
+    },
   },
   'rev-433': {
-    ...reviews[4]!,
+    ...summary('rev-433'),
     belief:
       'Kevin has credibility 43 — suspect band. This PR claims to fix the exact authorization gap I blocked in #404. I am checking whether the fix is real or whether it moves the check somewhere that looks correct and is not reached.',
     actions: [
@@ -613,7 +803,7 @@ const detailById: Record<string, ReviewDetail> = {
     credibilityDelta: 4,
   },
   'rev-404': {
-    ...reviews[5]!,
+    ...summary('rev-404'),
     belief:
       'Kevin has credibility 55, down 18 from the #391 regression six weeks ago. This adds a new endpoint to the org membership surface. Given #391 I am checking authorization explicitly rather than trusting that the middleware stack covers it.',
     actions: [
@@ -653,9 +843,26 @@ const detailById: Record<string, ReviewDetail> = {
     memoryWritten:
       'PR #404 added an invite endpoint behind requireAuth with no role check. Kevin conflates authentication with authorization. I now check every new endpoint of his for the second one explicitly.',
     credibilityDelta: -12,
+    diff: {
+      file: 'src/routes/orgs/members.ts',
+      prId: 'pr-404',
+      claim: 'The route asks who you are and never asks whether you may.',
+      lines: [
+        { n: 12, kind: 'context', text: "router.post('/:id/members/invite'," },
+        { n: 13, kind: 'add', text: '  requireAuth,' },
+        { n: 14, kind: 'add', text: '  validateBody(inviteSchema),' },
+        { n: 15, kind: 'context', text: '  inviteHandler,' },
+        { n: 16, kind: 'context', text: ')' },
+      ],
+    },
+    postedReview: {
+      body:
+        'Blocking. Any authenticated member can invite at owner role — I reproduced it: role=member sending an owner-level invite returns 201. requireAuth answers "who are you"; this endpoint never asks "may you". Please add requireRole before the handler and a test that expects 403.',
+      url: 'https://github.com/acme/platform/pull/404#pullrequestreview-1884',
+    },
   },
   'rev-391': {
-    ...reviews[6]!,
+    ...summary('rev-391'),
     belief:
       'Kevin has credibility 73. He describes this as a mechanical refactor of the session validation middleware — renames and file moves, no behavior change. The diff is large but the changes look uniform.',
     actions: [
@@ -686,7 +893,9 @@ const detailById: Record<string, ReviewDetail> = {
   },
 }
 
-export const reviewDetails = detailById
+export const reviewDetails: Record<string, ReviewDetail> = Object.fromEntries(
+  Object.entries(detailById).map(([id, r]) => [id, { postedReview: null, diff: null, ...r }]),
+)
 
 /* =============================================================================
    INCIDENTS
@@ -700,6 +909,7 @@ export const incidents: Incident[] = [
     status: 'attributed',
     attributedPrId: 'pr-481',
     attributedAuthorId: 'kevin',
+    confidence: 0.94,
   },
   {
     id: 'inc-2287',
@@ -714,6 +924,7 @@ export const incidents: Incident[] = [
     status: 'resolved',
     attributedPrId: 'pr-419',
     attributedAuthorId: 'liam',
+    confidence: 0.81,
   },
   {
     id: 'inc-2251',
@@ -722,5 +933,21 @@ export const incidents: Incident[] = [
     status: 'prevented',
     attributedPrId: 'pr-404',
     attributedAuthorId: 'kevin',
+    confidence: 1,
   },
 ]
+
+/**
+ * The case file for a PR, or null when none is on record.
+ *
+ * Not every scored PR has a review fixture, and §8.4/§9.2 require every card and
+ * row to land somewhere real — so callers render a link only when this returns
+ * an id, and plain text otherwise.
+ *
+ * NOTE: this consults the bundled record. Once a backend is serving reviews,
+ * this should consult the fetched review list instead, or it will under-link.
+ */
+export function caseFileFor(prId: string): string | null {
+  const id = prId.replace('pr-', 'rev-')
+  return id in reviewDetails ? id : null
+}

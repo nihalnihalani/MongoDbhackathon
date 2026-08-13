@@ -3,12 +3,12 @@
  *
  * Tries a real SSE connection to `${API_BASE}/api/stream` and reconnects with
  * exponential backoff. If the backend never answers — the normal case during a
- * demo — it hands off to the fixture player, which replays the scripted Kevin
- * investigation on a loop at realistic pacing so `/` is never dead air.
+ * demo — it hands off to the fixture player, which performs the scripted Kevin
+ * investigation once at realistic pacing and then rests.
  */
 
 import { API_BASE } from './api'
-import { SCRIPT_LOOP_PAUSE, streamScript } from '../fixtures/streamScript'
+import { streamScript } from '../fixtures/streamScript'
 import { markFixtureMode, sourceStore } from './source'
 import type { StreamEvent } from './types'
 
@@ -25,20 +25,80 @@ const MAX_BACKOFF = 8000
 type Emit = (event: StreamEvent) => void
 
 /* ---------------------------------------------------------------------------
-   Fixture player — the scripted investigation, on a loop
+   Fixture player — the scripted investigation, performed once
    ------------------------------------------------------------------------ */
 
-function playFixtureStream(emit: Emit): StreamHandle {
+/** Set once the arc has finished, so a refresh does not restage a 45s animation. */
+const ARC_KEY = 'receipts.arc'
+
+function arcAlreadyPlayed(): boolean {
+  try {
+    return sessionStorage.getItem(ARC_KEY) === 'played'
+  } catch {
+    return false
+  }
+}
+
+function markArcPlayed() {
+  try {
+    sessionStorage.setItem(ARC_KEY, 'played')
+  } catch {
+    // Private browsing. The arc simply plays again next load, which is harmless.
+  }
+}
+
+function prefersReducedMotion(): boolean {
+  try {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Should the arc be rendered whole instead of performed?
+ *
+ * Two cases, and both are about respecting the viewer rather than the script:
+ *
+ *  - Reduced motion (DESIGN.md §7.8.1). The hero of this product is animation,
+ *    so "reduce motion" cannot mean "see less". It means the complete case —
+ *    every event, the stamp, the final ledger — arrives at once.
+ *  - The arc already played this session (§7.0). Judges refresh and hit back,
+ *    and a refresh must never restart a 45-second animation they just watched.
+ */
+function shouldRenderInstantly(force: boolean): boolean {
+  if (force) return false
+  return prefersReducedMotion() || arcAlreadyPlayed()
+}
+
+function playFixtureStream(emit: Emit, onRest: () => void, force: boolean): StreamHandle {
   let timer: ReturnType<typeof setTimeout> | undefined
   let stopped = false
   let index = 0
 
+  markFixtureMode()
+  sourceStore.setConnection('replay')
+
+  if (shouldRenderInstantly(force)) {
+    // The stillness beat is a performance device. With nothing being performed
+    // it would render as a stray marker in the transcript, so it is not
+    // inserted at all (§7.8.4).
+    for (const scripted of streamScript) {
+      if (scripted.event.type !== 'hesitation') emit(scripted.event)
+    }
+    markArcPlayed()
+    onRest()
+    return { stop() {} }
+  }
+
   const step = () => {
     if (stopped) return
 
+    // The arc plays through and then rests. It does not restart on its own —
+    // a feed that loops back to the top mid-read is worse than one that ends.
     if (index >= streamScript.length) {
-      index = 0
-      timer = setTimeout(step, SCRIPT_LOOP_PAUSE)
+      markArcPlayed()
+      onRest()
       return
     }
 
@@ -51,8 +111,6 @@ function playFixtureStream(emit: Emit): StreamHandle {
     }, scripted.delay)
   }
 
-  markFixtureMode()
-  sourceStore.setConnection('fixture')
   step()
 
   return {
@@ -79,7 +137,15 @@ function parse(raw: string): StreamEvent | null {
   }
 }
 
-export function connectStream(emit: Emit): StreamHandle {
+/**
+ * @param force Replay was asked for explicitly, so perform the arc even if it
+ *   already played this session. A judge pressing REPLAY wants the performance.
+ */
+export function connectStream(
+  emit: Emit,
+  onRest: () => void = () => {},
+  force = false,
+): StreamHandle {
   let stopped = false
   let source: EventSource | undefined
   let openTimer: ReturnType<typeof setTimeout> | undefined
@@ -98,7 +164,7 @@ export function connectStream(emit: Emit): StreamHandle {
   const goToFixtures = () => {
     if (stopped || fallback) return
     cleanupSource()
-    fallback = playFixtureStream(emit)
+    fallback = playFixtureStream(emit, onRest, force)
   }
 
   const scheduleRetry = () => {

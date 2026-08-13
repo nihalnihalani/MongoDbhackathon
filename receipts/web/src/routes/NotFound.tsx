@@ -3,7 +3,7 @@ import { EmptyState } from '../components/EmptyState'
 
 export function NotFound() {
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-20">
+    <div className="route-enter mx-auto w-full max-w-2xl px-4 py-20">
       <EmptyState
         kicker="404 · Not in the archive"
         title="No such record."

@@ -1,10 +1,13 @@
+import { useLayoutEffect, useRef } from 'react'
+
 /**
  * Hand-rolled credibility sparkline. No chart library — this needs to be 40px
  * tall inside a chip and 90px tall inside a dossier header with the same code.
  *
  * The line is drawn in the contributor's band color; the 100 and 50 band
  * thresholds are drawn as hairlines when they fall inside the visible range, so
- * a reader can see *where* someone crossed out of trusted.
+ * a reader can see *where* someone crossed out of trusted — which is the actual
+ * story, since proximity to demotion is what the number is for.
  */
 
 interface SparklineProps {
@@ -31,6 +34,18 @@ export function Sparkline({
   className,
   ariaLabel,
 }: SparklineProps) {
+  const path = useRef<SVGPathElement>(null)
+
+  // Measure the drawn length so the dash animation matches the real geometry.
+  // Layout effect rather than effect: this must be written before first paint,
+  // or the line flashes at full length for a frame and then redraws itself.
+  useLayoutEffect(() => {
+    const el = path.current
+    if (!el) return
+    const len = el.getTotalLength()
+    if (len > 0) el.style.setProperty('--len', String(Math.ceil(len)))
+  })
+
   if (values.length < 2) {
     return <div className={className} style={{ width, height }} aria-hidden="true" />
   }
@@ -104,8 +119,19 @@ export function Sparkline({
         />
       )}
 
-      <path d={area} fill={`url(#${gradientId})`} />
+      <path className="spark-threshold" d={area} fill={`url(#${gradientId})`} />
+      {/*
+        The line draws itself left to right on mount. A credibility history is an
+        accumulation, and watching it accumulate is the difference between "here
+        is a number" and "here is how he got here" — the dossier's whole job.
+
+        The path length is measured in the layout effect below and written to
+        --len, because a hardcoded dasharray either clips a long line or leaves a
+        short one visibly waiting for an animation that has already finished.
+      */}
       <path
+        ref={path}
+        className="spark-draw"
         d={line}
         stroke="var(--band, var(--ink-amber))"
         strokeWidth="1.5"
@@ -113,9 +139,11 @@ export function Sparkline({
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      {/* The final point gets a square marker, never a dot — DESIGN.md §4. */}
+      {/* The final point gets a square marker, never a dot — DESIGN.md §4.
+          It lands only once the line has arrived beneath it. */}
       {endpoint && (
         <rect
+          className="spark-endpoint"
           x={x(values.length - 1) - 1.5}
           y={y(last) - 1.5}
           width="3"

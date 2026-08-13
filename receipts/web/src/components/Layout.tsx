@@ -44,7 +44,6 @@ export function Layout() {
         style={{
           borderColor: 'var(--line)',
           background: 'var(--bg-overlay)',
-          minHeight: 'var(--header-height)',
         }}
       >
         <div

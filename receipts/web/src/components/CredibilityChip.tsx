@@ -1,35 +1,43 @@
 import { Link } from 'react-router-dom'
-import type { Contributor } from '../lib/types'
+import { contributors } from '../fixtures/data'
 import { bandClass, bandLabel } from '../lib/format'
-import { Placeholder } from './Placeholder'
 
 interface ChipProps {
-  contributor: Contributor
-  /** The live stream has moved this person's score in this session. */
-  pulsing?: boolean
+  /** Contributor id. The chip resolves its own record — callers have an id, not a roster. */
+  id: string
+  className?: string
 }
 
 /**
- * DESIGN.md §4 — a 3px band bar, the name, the score. No avatars, no circles,
- * no sparkline: the chip is an index-card tab, and the story lives in the
- * dossier it opens.
+ * DESIGN.md §4 — a 3px band bar, the name, the scoped score, the band word.
+ * No avatars, no circles, no pills.
  *
- * Color is never the only signal; the band word rides alongside the number.
+ * THIS COMPONENT IS DELIBERATELY HARD TO PLACE. It appears in exactly two
+ * positions: inside the stream at the moment of a retrieval, and on the dossier
+ * header. Never in a row with other people, never ambient, never at rest on `/`.
+ * A row of people-with-scores is a leaderboard, and a leaderboard is the
+ * dashboard form the rubric bans — the whole point is that a score is something
+ * the agent just looked up, not state the page carries around.
+ *
+ * Colour is never the only signal; the band word rides alongside the number.
  */
-export function CredibilityChip({ contributor, pulsing = false }: ChipProps) {
-  const { id, name, credibility, band } = contributor
+export function CredibilityChip({ id, className = '' }: ChipProps) {
+  const contributor = contributors.find((c) => c.id === id)
+  if (!contributor) return null
+
+  const { name, credibility, band, subsystem } = contributor
   const given = name.split(' ')[0] ?? name
 
   return (
     <Link
       to={`/contributor/${id}`}
-      className={`row-link flex h-[34px] shrink-0 items-center gap-2.5 border pr-2.5 ${bandClass[band]}`}
+      className={`lift inline-flex h-[34px] shrink-0 items-center gap-2.5 border pr-3 ${bandClass[band]} ${className}`}
       style={{
         borderRadius: 'var(--r-2)',
-        borderColor: pulsing ? 'var(--band)' : 'var(--line-control)',
-        background: pulsing ? 'var(--band-tint)' : 'var(--surface)',
+        borderColor: 'var(--line-control)',
+        background: 'var(--surface)',
       }}
-      aria-label={`${name}: credibility ${credibility}, ${bandLabel[band]} band. Open dossier.`}
+      aria-label={`${name}: credibility ${credibility} in ${subsystem}, ${bandLabel[band]} band. Open dossier.`}
     >
       <span
         aria-hidden="true"
@@ -48,17 +56,17 @@ export function CredibilityChip({ contributor, pulsing = false }: ChipProps) {
         {given}
       </span>
 
+      {/* Never a bare number: the subsystem is part of the figure. */}
+      <span className="num" style={{ fontSize: 'var(--fs-numeral-sm)', color: 'var(--band)', lineHeight: 1 }}>
+        {credibility}
+      </span>
+      <span className="label" style={{ color: 'var(--ink-3)' }}>
+        · {subsystem}
+      </span>
+
       <span className="label" style={{ color: 'var(--band)' }}>
         {bandLabel[band]}
       </span>
-
-      <span className="num" style={{ fontSize: '15px', color: 'var(--band)', lineHeight: 1 }}>
-        {credibility}
-      </span>
     </Link>
   )
-}
-
-export function CredibilityChipPlaceholder() {
-  return <Placeholder height={34} width={168} className="shrink-0" />
 }

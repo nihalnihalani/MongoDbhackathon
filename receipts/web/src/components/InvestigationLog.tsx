@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { LogEntry } from '../lib/types'
 import { useReducedMotion } from '../hooks/useReducedMotion'
 import { skipAllTyping } from '../hooks/useTypedText'
-import { LogEvent } from './LogEvent'
+import { LogEvent, MemoryIndex } from './LogEvent'
 
 interface LogProps {
   entries: LogEntry[]
@@ -60,7 +60,22 @@ export function InvestigationLog({ entries }: LogProps) {
 
   const lastKey = entries.length > 0 ? entries[entries.length - 1]!.key : null
 
+  /**
+   * Quotes for every memory the stream has shown, so a causal link can name what
+   * it points at rather than printing `mem-k-04`. Built from the events
+   * themselves rather than from fixtures, so it works against a live backend.
+   */
+  const memoryIndex = useMemo(() => {
+    const index: Record<string, string> = {}
+    for (const { event } of entries) {
+      if (event.type !== 'retrieval') continue
+      for (const memory of event.memories) index[memory.id] = memory.text
+    }
+    return index
+  }, [entries])
+
   return (
+    <MemoryIndex.Provider value={memoryIndex}>
     <div className="relative">
       <div
         ref={viewport}
@@ -103,6 +118,7 @@ export function InvestigationLog({ entries }: LogProps) {
         </button>
       )}
     </div>
+    </MemoryIndex.Provider>
   )
 }
 

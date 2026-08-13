@@ -1,6 +1,6 @@
-import { useEffect, useReducer } from 'react'
+import { useCallback, useEffect, useReducer, useState } from 'react'
 import { connectStream } from '../lib/stream'
-import type { LogEntry, ReviewStatus, Scrutiny, StreamEvent } from '../lib/types'
+import type { ArcPhase, LogEntry, ReviewStatus, Scrutiny, StreamEvent } from '../lib/types'
 import { toStatus } from '../lib/format'
 
 export interface LiveCase {
@@ -45,7 +45,12 @@ function scrutinyFromLabel(label: string): Scrutiny | null {
   return null
 }
 
-function reduce(state: StreamState, event: StreamEvent): StreamState {
+/** A local control action, distinct from anything the backend can send. */
+type Action = StreamEvent | { type: 'reset' }
+
+function reduce(state: StreamState, event: Action): StreamState {
+  if (event.type === 'reset') return INITIAL
+
   const at = Date.now()
   const entry: LogEntry = { key: `${at}-${state.count}`, at, event }
   const entries = [...state.entries, entry].slice(-MAX_ENTRIES)
@@ -93,17 +98,42 @@ function reduce(state: StreamState, event: StreamEvent): StreamState {
   }
 }
 
+export interface AgentStream extends StreamState {
+  /** `rested` means the arc has played through and is holding its ending. */
+  phase: ArcPhase
+  replay: () => void
+}
+
 /**
  * Subscribes to the agent stream for the lifetime of the component and folds
  * events into the state the Courtroom renders.
+ *
+ * The replayed arc runs once and then rests, so `replay` remounts the stream
+ * from a clean slate rather than looping the reader back to the top unasked.
  */
-export function useAgentStream(): StreamState {
+export function useAgentStream(): AgentStream {
   const [state, dispatch] = useReducer(reduce, INITIAL)
+  const [phase, setPhase] = useState<ArcPhase>('playing')
+  /** Bumping this tears down the stream and starts a fresh one. */
+  const [run, setRun] = useState(0)
 
-  useEffect(() => {
-    const handle = connectStream((event) => dispatch(event))
-    return () => handle.stop()
+  const replay = useCallback(() => {
+    dispatch({ type: 'reset' })
+    setPhase('playing')
+    setRun((n) => n + 1)
   }, [])
 
-  return state
+  useEffect(() => {
+    // `run > 0` only happens via the REPLAY control, and an explicit replay
+    // always performs the arc — even under reduced motion, where the first pass
+    // deliberately rendered it whole. Asking to watch it is consent to watch it.
+    const handle = connectStream(
+      (event) => dispatch(event),
+      () => setPhase('rested'),
+      run > 0,
+    )
+    return () => handle.stop()
+  }, [run])
+
+  return { ...state, phase, replay }
 }

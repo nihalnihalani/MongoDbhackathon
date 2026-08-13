@@ -72,6 +72,16 @@ export function toStatus(decision: string): ReviewStatus {
   return 'investigating'
 }
 
+/**
+ * A verdict has, by definition, been decided — so it narrows to the three
+ * stampable outcomes. An unrecognized decision is treated as a comment rather
+ * than as an open investigation.
+ */
+export function toVerdict(decision: string): Exclude<ReviewStatus, 'investigating'> {
+  const status = toStatus(decision)
+  return status === 'investigating' ? 'commented' : status
+}
+
 export const scrutinyLabel: Record<Scrutiny, string> = {
   normal: 'Normal',
   elevated: 'Elevated',

@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getReview } from '../lib/api'
 import { useAsync } from '../hooks/useAsync'
+import { useState } from 'react'
 import {
   absoluteDate,
   prNumber,
@@ -9,7 +10,7 @@ import {
   scrutinyLabel,
   signed,
   similarityPct,
-  toStatus,
+  toVerdict,
 } from '../lib/format'
 import type { AgentAction, Evidence, ReviewDetail } from '../lib/types'
 import { EmptyState } from '../components/EmptyState'
@@ -17,7 +18,11 @@ import { ErrorPanel } from '../components/ErrorPanel'
 import { Prose } from '../components/Prose'
 import { ScrutinyMeter } from '../components/ScrutinyMeter'
 import { Placeholder, PlaceholderList } from '../components/Placeholder'
-import { Stamp } from '../components/Stamp'
+import { Stamp, StatusText } from '../components/Stamp'
+import { DiffHunk } from '../components/DiffHunk'
+import { caseFileFor } from '../fixtures/data'
+import { ControlComparison } from '../components/ControlComparison'
+import { PostedReview } from '../components/PostedReview'
 
 /** A titled slab with a stamped label — the case file's only structural unit. */
 function Section({
@@ -82,7 +87,7 @@ function ActionRow({ action, index }: { action: AgentAction; index: number }) {
 }
 
 function EvidenceRow({ item }: { item: Evidence }) {
-  const reviewId = item.sourceId.startsWith('pr-') ? item.sourceId.replace('pr-', 'rev-') : null
+  const reviewId = item.sourceId.startsWith('pr-') ? caseFileFor(item.sourceId) : null
   const strong = item.similarity >= 0.9
 
   const inner = (
@@ -158,7 +163,15 @@ function EvidenceRow({ item }: { item: Evidence }) {
   )
 }
 
-function CaseHeader({ review }: { review: ReviewDetail }) {
+function CaseHeader({
+  review,
+  comparing,
+  onCompare,
+}: {
+  review: ReviewDetail
+  comparing?: boolean
+  onCompare?: () => void
+}) {
   return (
     <header
       className="rise flex flex-col gap-5 border-b px-4 pt-8 pb-6 sm:px-6"
@@ -194,8 +207,19 @@ function CaseHeader({ review }: { review: ReviewDetail }) {
           </Link>
         </span>
         <ScrutinyMeter level={review.scrutiny} />
-        <Stamp status={review.status} size="lg" slam className="ml-auto" />
+        {/* The one stamp on this page belongs to the verdict. Status here is
+            plain text (DESIGN.md §3, v2 amendment 7). */}
+        <StatusText status={review.status} className="ml-auto" />
       </div>
+
+      {review.controlOf && onCompare && (
+        <div>
+          <button type="button" className="btn" onClick={onCompare} aria-expanded={comparing}>
+            <span aria-hidden="true">⇄</span>{' '}
+            {comparing ? 'Hide comparison' : 'Compare — the same diff, another author'}
+          </button>
+        </div>
+      )}
     </header>
   )
 }
@@ -228,7 +252,7 @@ function Outcome({ review }: { review: ReviewDetail }) {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-start gap-x-8 gap-y-5">
-        <Stamp status={toStatus(verdict.decision)} size="lg" slam />
+        <Stamp status={toVerdict(verdict.decision)} press />
         {credibilityDelta !== null && (
           <div className="flex flex-col">
             <span className="label">Credibility applied</span>
@@ -252,6 +276,8 @@ function Outcome({ review }: { review: ReviewDetail }) {
       </div>
 
       <Prose text={verdict.reasoning} />
+
+      {review.postedReview && <PostedReview review={review.postedReview} />}
 
       {memoryWritten && (
         <div
@@ -305,6 +331,7 @@ function CaseFilePlaceholder() {
 export function CaseFile() {
   const { id = '' } = useParams<{ id: string }>()
   const { data, error, loading, reload } = useAsync((signal) => getReview(id, signal), [id])
+  const [comparing, setComparing] = useState(false)
 
   if (loading) return <CaseFilePlaceholder />
 
@@ -319,13 +346,29 @@ export function CaseFile() {
   if (!data) return null
 
   return (
-    <div className="mx-auto w-full px-4 py-5 sm:px-6" style={{ maxWidth: 'var(--content-max)' }}>
+    <div className="route-enter mx-auto w-full px-4 py-5 sm:px-6" style={{ maxWidth: 'var(--content-max)' }}>
       <article className="panel overflow-hidden">
-        <CaseHeader review={data} />
+        <CaseHeader
+          review={data}
+          comparing={comparing}
+          onCompare={() => setComparing((v) => !v)}
+        />
+
+        {data.controlOf && comparing && (
+          <Section id="control-condition" label="Control condition" hint="memory is the only variable">
+            <ControlComparison leftId={data.controlOf} rightId={data.id} />
+          </Section>
+        )}
 
         <Section id="belief" label="Belief formed" hint="before reading a single line of the diff">
           <Prose text={data.belief} />
         </Section>
+
+        {data.diff && (
+          <Section id="hunk" label="The code in question" hint={data.diff.claim}>
+            <DiffHunk hunk={data.diff} />
+          </Section>
+        )}
 
         <Section
           id="evidence"

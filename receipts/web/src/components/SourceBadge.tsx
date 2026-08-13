@@ -1,23 +1,16 @@
 import { useSyncExternalStore } from 'react'
 import { sourceStore } from '../lib/source'
 
-const CONNECTION_TEXT: Record<string, string> = {
-  connecting: 'Connecting',
-  open: 'Live',
-  reconnecting: 'Reconnecting',
-  fixture: 'Replay',
-}
-
-const CONNECTION_COLOR: Record<string, string> = {
-  connecting: 'var(--ink-3)',
-  open: 'var(--ink-green)',
-  reconnecting: 'var(--ink-amber)',
-  fixture: 'var(--ink-amber)',
-}
-
 /**
- * Discloses whether the app is talking to a backend or replaying the bundled
- * case file. Small on purpose — it should be honest, not loud.
+ * What the reader is looking at, stated plainly.
+ *
+ * v2 amendment 2 deletes the "fixture mode" badge outright, and the reason is
+ * worth keeping in view: calling this a fixture undersells it. It is a replay of
+ * a real case — the same events, in the same order, with the same timing — so it
+ * is labelled the way a recording is labelled, not the way a mock is.
+ *
+ * No border, no chip. A recording label is metadata about the page, not a
+ * control, and giving it a box makes it look like something to click.
  */
 export function SourceBadge() {
   const { source, connection } = useSyncExternalStore(
@@ -26,36 +19,35 @@ export function SourceBadge() {
     sourceStore.getSnapshot,
   )
 
-  const color = CONNECTION_COLOR[connection] ?? 'var(--ink-3)'
-  const text = CONNECTION_TEXT[connection] ?? connection
+  // A live backend is the only case that gets an indicator, because it is the
+  // only case where the state can change under the reader.
+  if (source === 'live' && connection === 'open') {
+    return (
+      <span className="label status-live" style={{ color: 'var(--ink-green)' }}>
+        Live
+      </span>
+    )
+  }
+
+  if (connection === 'reconnecting') {
+    return (
+      <span className="label" style={{ color: 'var(--ink-amber)' }}>
+        Reconnecting
+      </span>
+    )
+  }
+
+  if (connection === 'connecting') {
+    return (
+      <span className="label" style={{ color: 'var(--ink-3)' }}>
+        Connecting
+      </span>
+    )
+  }
 
   return (
-    <span
-      className="flex items-center gap-2 border px-2 py-1"
-      style={{
-        borderRadius: 'var(--r-2)',
-        borderColor: 'var(--line)',
-        background: 'var(--surface)',
-      }}
-      title={
-        source === 'fixture'
-          ? 'No backend reachable — replaying the bundled case file.'
-          : `Connected to the agent stream.`
-      }
-    >
-      <span
-        aria-hidden="true"
-        style={{
-          width: 6,
-          height: 6,
-          borderRadius: 'var(--r-3)',
-          background: color,
-          boxShadow: `0 0 0 3px color-mix(in srgb, ${color} 22%, transparent)`,
-        }}
-      />
-      <span className="label" style={{ color }}>
-        {source === 'fixture' ? `Fixture · ${text}` : text}
-      </span>
+    <span className="label" style={{ color: 'var(--ink-3)' }}>
+      Replay · recorded 14:22
     </span>
   )
 }

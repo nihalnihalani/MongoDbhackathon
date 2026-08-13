@@ -9,7 +9,7 @@
    color-mix as §1 requires so every tint tracks the theme.
    ========================================================================== */
 
-/* ---- DESIGN.md §1 — Color tokens (verbatim) ------------------------------ */
+/* ---- DESIGN.md §1 — Color tokens (verbatim, v2) -------------------------- */
 
 :root {
   color-scheme: dark;
@@ -17,32 +17,32 @@
   /* ---- Ground: warm near-black, like exposed photographic paper ---- */
   --bg:            #0C0B0A;
   --surface:       #141310;   /* stream rows, panels */
-  --surface-2:     #1C1A16;   /* raised cards, evidence, memo blocks */
-  --surface-sunk:  #080807;   /* wells, code output, inset logs */
+  --surface-2:     #1C1A16;   /* raised cards, memo blocks */
+  --surface-sunk:  #080807;   /* wells, action output, diff hunks */
 
   /* ---- Rules & borders ---- */
   --line:          #2A2722;   /* hairline separators (decorative only) */
-  --line-strong:   #3D3830;   /* panel edges, card borders (decorative) */
-  --line-control:  #6E655A;   /* REQUIRED for interactive borders — 3.44:1 on --bg */
+  --line-strong:   #3D3830;   /* panel & card edges (decorative only) */
+  --line-control:  #6E655A;   /* REQUIRED on interactive borders — 3.44:1 on --bg */
 
   /* ---- Ink (text) ---- */
-  --ink:           #EDE6D8;   /* primary — 15.8:1 on --bg, 14.0:1 on --surface-2 */
+  --ink:           #EDE6D8;   /* primary   — 15.8:1 on --bg, 14.0:1 on --surface-2 */
   --ink-2:         #A9A092;   /* secondary —  7.6:1 on --bg,  6.7:1 on --surface-2 */
-  --ink-3:         #8A8174;   /* meta: timestamps, ids —  5.1:1 / 4.5:1 */
+  --ink-3:         #8A8174;   /* meta      —  5.1:1 on --bg,  4.5:1 on --surface-2 */
 
-  /* ---- Signal inks. Same values serve verdicts AND credibility bands. ---- */
-  --ink-red:       #F0553C;   /* BLOCKED   / band: suspect  — 5.7:1 on --bg */
-  --ink-amber:     #E8A93C;   /* COMMENTED / band: watch    — 9.5:1 on --bg */
-  --ink-green:     #3FBE7C;   /* APPROVED  / band: trusted  — 8.3:1 on --bg */
-  --ink-steel:     #69A9E8;   /* INVESTIGATING, live state  — 7.9:1 on --bg */
-  --ink-mimeo:     #B48BE8;   /* escalation, high-similarity — 7.3:1 on --bg */
+  /* ---- Signal inks: verdicts, credibility bands, deltas ---- */
+  --ink-red:       #F26A50;   /* BLOCKED   / suspect / negative delta */
+  --ink-amber:     #E8A93C;   /* COMMENTED / watch */
+  --ink-green:     #3FBE7C;   /* APPROVED  / trusted / recovery */
+  --ink-steel:     #69A9E8;   /* actions, live state */
+  --ink-mimeo:     #B48BE8;   /* escalation, causal links, high similarity */
 
   /* ---- Utility ---- */
   --focus:         #F5C542;   /* 12.1:1 on --bg */
   --shadow-hard:   rgba(0, 0, 0, 0.62);
   --select-bg:     rgba(245, 197, 66, 0.22);
-  --stamp-fill:    10%;       /* currentColor mix % behind a stamp */
-  --texture-ink:   rgba(237, 230, 216, 0.030);  /* noise + ledger rules */
+  --tint:          12%;       /* signal-ink field tint strength */
+  --texture-ink:   rgba(237, 230, 216, 0.030);
 }
 
 :root[data-theme='light'] {
@@ -62,16 +62,16 @@
   --ink-2:         #4A4237;   /*  8.0:1 */
   --ink-3:         #6E6455;   /*  4.7:1 */
 
-  --ink-red:       #B3301A;   /*  5.1:1 */
-  --ink-amber:     #8A5A0B;   /*  4.8:1 */
-  --ink-green:     #1A6B42;   /*  5.3:1 */
-  --ink-steel:     #1F5E96;   /*  5.5:1 */
-  --ink-mimeo:     #6B3FA8;   /*  5.9:1 */
+  --ink-red:       #9E2814;
+  --ink-amber:     #7A4E05;
+  --ink-green:     #155C38;
+  --ink-steel:     #1B5285;
+  --ink-mimeo:     #6B3FA8;
 
   --focus:         #8A4B00;   /*  5.5:1 */
   --shadow-hard:   rgba(58, 48, 32, 0.30);
   --select-bg:     rgba(138, 75, 0, 0.18);
-  --stamp-fill:    8%;
+  --tint:          12%;
   --texture-ink:   rgba(26, 23, 18, 0.038);
 }
 
@@ -111,6 +111,7 @@
   /* ---- Type scale (DESIGN.md §2, px for determinism) ---- */
   --fs-display-xl: 64px;
   --fs-display-l: 44px;
+  --fs-belief: 30px;
   --fs-display-m: 30px;
   --fs-title: 21px;
   --fs-prose: 16.5px;
@@ -121,6 +122,7 @@
   --fs-mono-sm: 12px;
   --fs-numeral-xl: 72px;
   --fs-numeral: 20px;
+  --fs-numeral-sm: 15px;
 
   --lh-prose: 1.65;
   --lh-body: 1.55;
@@ -129,22 +131,55 @@
 
   /* Outermost page width. The stream centers --stream-max inside it. */
   --content-max: 1440px;
+  /* The Case File is a single readable narrative, not a layout (DESIGN.md §9.3). */
+  --case-max: 820px;
 
-  /* ---- Field tints (DESIGN.md §4) ---- */
-  --tint-red: color-mix(in oklab, var(--ink-red) 12%, transparent);
-  --tint-amber: color-mix(in oklab, var(--ink-amber) 12%, transparent);
-  --tint-green: color-mix(in oklab, var(--ink-green) 12%, transparent);
-  --tint-steel: color-mix(in oklab, var(--ink-steel) 12%, transparent);
-  --tint-mimeo: color-mix(in oklab, var(--ink-mimeo) 12%, transparent);
+  /* ---- Field tints (DESIGN.md §4) — never hardcoded rgba ---- */
+  --tint-red: color-mix(in oklab, var(--ink-red) var(--tint), transparent);
+  --tint-amber: color-mix(in oklab, var(--ink-amber) var(--tint), transparent);
+  --tint-green: color-mix(in oklab, var(--ink-green) var(--tint), transparent);
+  --tint-steel: color-mix(in oklab, var(--ink-steel) var(--tint), transparent);
+  --tint-mimeo: color-mix(in oklab, var(--ink-mimeo) var(--tint), transparent);
 
   /* Translucent masthead ground — the only place a surface is see-through. */
   --bg-overlay: color-mix(in oklab, var(--bg) 88%, transparent);
 
-  /* ---- Motion (DESIGN.md §7) ---- */
+  /* =========================================================================
+     MOTION (DESIGN.md §7)
+     -------------------------------------------------------------------------
+     Two rules govern everything below.
+
+     1. Only `transform` and `opacity` are ever animated over time. Both are
+        compositor properties, so a stagger burst of eight cards costs the main
+        thread nothing. Colour and shadow change only on discrete hover/focus
+        transitions, where there is no per-frame cost to pay.
+
+     2. Every curve has real acceleration. `ease-out` alone reads as software;
+        matter starts slow, gains speed, and is stopped by something. The stamp
+        curve overshoots because a struck stamp rebounds off the paper.
+     ====================================================================== */
+
+  /* Arrivals: fast attack, long settle. The workhorse. */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-stamp: cubic-bezier(0.2, 1.5, 0.3, 1);
-  --dur-fast: 120ms;
-  --dur-row: 220ms;
-  --dur-rail: 260ms;
-  --dur-stamp: 320ms;
+  /* Two-way state changes: symmetric accel/decel. */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  /* Departures: accelerate away, no settle. */
+  --ease-in: cubic-bezier(0.55, 0, 1, 0.45);
+  /* The stamp: overshoot past rest, rebound, settle. Nothing else uses this. */
+  --ease-stamp: cubic-bezier(0.34, 1.2, 0.44, 1);
+  /* A line drawing itself — near-linear with a soft stop. */
+  --ease-draw: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  --dur-micro: 120ms;   /* focus rings, glyph ticks */
+  --dur-hover: 150ms;   /* the interactive-card lift */
+  --dur-row: 220ms;     /* one stream row arriving */
+  --dur-card: 300ms;    /* an evidence card, a panel */
+  --dur-rail: 260ms;    /* the docket opening */
+  --dur-route: 260ms;   /* between routes */
+  --dur-stamp: 380ms;   /* the press — the longest UI motion in the product */
+  --dur-sweep: 700ms;   /* recovery sweep, number tween, sparkline draw */
+
+  /* The two deliberate dramatic beats. Both are silence, not movement. */
+  --dur-hesitation: 1500ms;
+  --stagger-burst: 90ms;
 }

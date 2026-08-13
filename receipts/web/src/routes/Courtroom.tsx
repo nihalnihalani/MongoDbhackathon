@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAgentStream, type LiveCase } from '../hooks/useAgentStream'
-import { ContributorStrip } from '../components/ContributorStrip'
+import type { ArcPhase } from '../lib/types'
 import { DocketRail } from '../components/DocketRail'
 import { InvestigationLog } from '../components/InvestigationLog'
 import { ScrutinyMeter } from '../components/ScrutinyMeter'
-import { Stamp } from '../components/Stamp'
+import { StatusText } from '../components/Stamp'
+import { ControlComparison } from '../components/ControlComparison'
 import { prNumber } from '../lib/format'
 
 /** Seconds since the case opened, ticking. */
@@ -25,7 +26,17 @@ function useElapsed(since: number | undefined): string {
   return `${mm}:${ss}`
 }
 
-function CaseHeader({ current, events }: { current: LiveCase | null; events: number }) {
+function CaseHeader({
+  current,
+  events,
+  phase,
+  onReplay,
+}: {
+  current: LiveCase | null
+  events: number
+  phase: ArcPhase
+  onReplay: () => void
+}) {
   const elapsed = useElapsed(current?.startedAt)
 
   return (
@@ -35,7 +46,11 @@ function CaseHeader({ current, events }: { current: LiveCase | null; events: num
     >
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <span className="label label-accent">
-          {current ? 'Now under investigation' : 'Court in session'}
+          {!current
+            ? 'Court in session'
+            : phase === 'rested'
+              ? 'Case closed'
+              : 'Now under investigation'}
         </span>
         <span className="num" style={{ fontSize: 'var(--fs-mono-sm)', color: 'var(--ink-3)' }}>
           T+{elapsed}
@@ -65,13 +80,17 @@ function CaseHeader({ current, events }: { current: LiveCase | null; events: num
               </span>
             </span>
             <ScrutinyMeter level={current.scrutiny} />
-            <Stamp status={current.status} />
-            <Link
-              to={`/review/${current.reviewId}`}
-              className="btn ml-auto"
-            >
-              Open case file <span aria-hidden="true">→</span>
-            </Link>
+            <StatusText status={current.status} />
+            <div className="ml-auto flex items-center gap-2">
+              {phase === 'rested' && (
+                <button type="button" className="btn" onClick={onReplay}>
+                  <span aria-hidden="true">▸</span> Replay
+                </button>
+              )}
+              <Link to={`/review/${current.reviewId}`} className="btn btn-primary">
+                Open case file <span aria-hidden="true">→</span>
+              </Link>
+            </div>
           </div>
         </>
       ) : (
@@ -121,17 +140,22 @@ function useRailState(): [boolean, () => void] {
 }
 
 export function Courtroom() {
-  const { entries, current, moves, count } = useAgentStream()
+  const { entries, current, count, phase, replay } = useAgentStream()
   const [railOpen, toggleRail] = useRailState()
 
   return (
     <>
-      <ContributorStrip moves={moves} />
-
-      <div className="mx-auto w-full px-4 py-5 sm:px-6" style={{ maxWidth: 'var(--content-max)' }}>
+      {/* NO CONTRIBUTOR STRIP HERE, DELIBERATELY (v2 amendment 1). A row of
+          people-with-scores at rest is a leaderboard, which is the dashboard
+          form the rubric bans. Scores appear only inside the stream, at the
+          moment the agent retrieves one. */}
+      <div
+        className="route-enter mx-auto w-full px-4 py-5 sm:px-6"
+        style={{ maxWidth: 'var(--content-max)' }}
+      >
         <div className="courtroom-grid" data-rail={railOpen ? 'open' : 'closed'}>
           <section className="panel min-w-0 overflow-hidden">
-            <CaseHeader current={current} events={count} />
+            <CaseHeader current={current} events={count} phase={phase} onReplay={replay} />
 
             <div className="flex items-center gap-3 px-4 py-2.5 sm:px-6">
               <h2 className="label" style={{ color: 'var(--ink-2)' }}>
@@ -151,11 +175,34 @@ export function Courtroom() {
             </div>
 
             <InvestigationLog entries={entries} />
+
+            {/* The theme proof is the last thing a judge reads on this page,
+                which is exactly where it belongs: they have just watched Kevin
+                get blocked, and this is the control showing that the blocking
+                was about memory rather than about the code. */}
+            {phase === 'rested' && (
+              <div
+                className="rise border-t px-4 py-7 sm:px-6"
+                style={{ borderColor: 'var(--line-strong)', background: 'var(--surface-sunk)' }}
+              >
+                <ControlComparison leftId="rev-507" rightId="rev-512" />
+              </div>
+            )}
           </section>
 
           {railOpen ? (
             <aside id="docket-rail" aria-label="Docket and incidents" className="min-w-0">
-              <DocketRail />
+              <DocketRail
+                live={
+                  current
+                    ? {
+                        reviewId: current.reviewId,
+                        status: current.status,
+                        scrutiny: current.scrutiny,
+                      }
+                    : null
+                }
+              />
             </aside>
           ) : (
             <button

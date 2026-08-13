@@ -2,10 +2,10 @@ import { Link } from 'react-router-dom'
 import { getIncidents, getReviews } from '../lib/api'
 import { useAsync } from '../hooks/useAsync'
 import { prNumber, relativeTime, scrutinyLabel } from '../lib/format'
-import type { Incident, ReviewSummary } from '../lib/types'
+import type { Incident, ReviewStatus, ReviewSummary, Scrutiny } from '../lib/types'
 import { EmptyState } from './EmptyState'
 import { Placeholder } from './Placeholder'
-import { Stamp } from './Stamp'
+import { StatusText } from './Stamp'
 
 const INCIDENT_TONE: Record<string, string> = {
   attributed: 'var(--ink-red)',
@@ -26,7 +26,7 @@ function DocketEntry({ review }: { review: ReviewSummary }) {
           <span className="num shrink-0" style={{ fontSize: 'var(--fs-mono-sm)', color: 'var(--ink-amber)' }}>
             {prNumber(review.prId)}
           </span>
-          <Stamp status={review.status} className="shrink-0" />
+          <StatusText status={review.status} className="shrink-0" />
         </div>
         <p
           className="mt-2"
@@ -134,11 +134,25 @@ function RailPlaceholder() {
  * The rail is supporting evidence, never the headline: what else is on the
  * agent's plate, and what has already gone wrong in production.
  */
-export function DocketRail() {
+interface DocketRailProps {
+  /**
+   * The case currently on the stream. The docket is fetched once, so without
+   * this the rail would still call the live review "investigating" minutes
+   * after the reader watched it get blocked.
+   */
+  live?: { reviewId: string; status: ReviewStatus; scrutiny: Scrutiny } | null
+}
+
+export function DocketRail({ live }: DocketRailProps) {
   const reviewsState = useAsync((signal) => getReviews(undefined, signal), [])
   const incidentsState = useAsync((signal) => getIncidents(signal), [])
 
-  const reviews = reviewsState.data ?? []
+  const fetched = reviewsState.data ?? []
+  const reviews = live
+    ? fetched.map((r) =>
+        r.id === live.reviewId ? { ...r, status: live.status, scrutiny: live.scrutiny } : r,
+      )
+    : fetched
   const active = reviews.filter((r) => r.status === 'investigating')
   const closed = reviews.filter((r) => r.status !== 'investigating').slice(0, 4)
   const incidents = incidentsState.data ?? []

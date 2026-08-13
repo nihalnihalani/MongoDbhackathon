@@ -18,16 +18,25 @@ export function ScrutinyMeter({ level }: { level: Scrutiny }) {
   return (
     <span className="flex items-center gap-2">
       <span className="label">Scrutiny</span>
+      {/*
+        The notches fill left to right rather than all at once. Scrutiny going
+        from normal to maximum is the most consequential thing the agent does to
+        a person on the strength of memory alone, and a value that simply
+        changes reads as configuration — a value that visibly climbs reads as a
+        decision being taken.
+      */}
       <span className="flex items-center gap-1" aria-hidden="true">
         {[1, 2, 3].map((n) => (
           <span
             key={n}
+            className="scrutiny-notch"
+            data-on={n <= rank}
             style={{
+              ['--notch-i' as string]: n - 1,
               width: 14,
               height: 4,
               background: n <= rank ? tone : 'var(--line-strong)',
               borderRadius: 1,
-              transition: 'background-color var(--dur-rail) var(--ease-out)',
             }}
           />
         ))}

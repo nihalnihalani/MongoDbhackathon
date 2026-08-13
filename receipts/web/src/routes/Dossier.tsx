@@ -9,6 +9,7 @@ import { MemoryCard, reviewIdForSource } from '../components/MemoryCard'
 import { Prose } from '../components/Prose'
 import { Placeholder, PlaceholderList } from '../components/Placeholder'
 import { Sparkline } from '../components/Sparkline'
+import { Ledger } from '../components/Ledger'
 
 function HistoryRow({ entry }: { entry: HistoryEntry }) {
   const reviewId = reviewIdForSource(entry.prId)
@@ -113,7 +114,9 @@ function DossierHeader({ c }: { c: ContributorDetail }) {
 
       <div className="flex shrink-0 items-end gap-6">
         <div className="flex flex-col">
-          <span className="label">Credibility</span>
+          <span className="label">
+            Credibility · <span style={{ color: 'var(--ink-amber)' }}>{c.subsystem}</span>
+          </span>
           <span
             className="num"
             style={{
@@ -179,7 +182,7 @@ export function Dossier() {
   const otherMemories = data.memories.filter((m) => m.kind !== 'self')
 
   return (
-    <div className="mx-auto w-full px-4 py-5 sm:px-6" style={{ maxWidth: 'var(--content-max)' }}>
+    <div className="route-enter mx-auto w-full px-4 py-5 sm:px-6" style={{ maxWidth: 'var(--content-max)' }}>
       <article className="panel overflow-hidden">
         <DossierHeader c={data} />
 
@@ -194,7 +197,10 @@ export function Dossier() {
           className="dossier-grid border-t px-4 py-6 sm:px-6"
           style={{ borderColor: 'var(--line)' }}
         >
-          <section aria-labelledby="history">
+          <section className="flex flex-col gap-8">
+            <Ledger ledger={data.ledger} />
+
+            <div aria-labelledby="history">
             <h2 id="history" className="label" style={{ color: 'var(--ink-2)' }}>
               Scored history
             </h2>
@@ -216,6 +222,7 @@ export function Dossier() {
                 ))}
               </ul>
             )}
+            </div>
           </section>
 
           <section aria-labelledby="memories">
