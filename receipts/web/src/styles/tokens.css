@@ -1,0 +1,185 @@
+/* =============================================================================
+   RECEIPTS — Design tokens
+   -----------------------------------------------------------------------------
+   §1 and §5 below are pasted VERBATIM from DESIGN.md (owner: design-director).
+   Do not edit those blocks; they are the authoritative palette and metrics.
+
+   The DERIVED ROLES section at the bottom is the only thing this file adds: it
+   names component-level roles in terms of the design director's inks, using
+   color-mix as §1 requires so every tint tracks the theme.
+   ========================================================================== */
+
+/* ---- DESIGN.md §1 — Color tokens (verbatim, v2) -------------------------- */
+
+:root {
+  color-scheme: dark;
+
+  /* ---- Ground: warm near-black, like exposed photographic paper ---- */
+  --bg:            #0C0B0A;
+  --surface:       #141310;   /* stream rows, panels */
+  --surface-2:     #1C1A16;   /* raised cards, memo blocks */
+  --surface-sunk:  #080807;   /* wells, action output, diff hunks */
+
+  /* ---- Rules & borders ---- */
+  --line:          #2A2722;   /* hairline separators (decorative only) */
+  --line-strong:   #3D3830;   /* panel & card edges (decorative only) */
+  --line-control:  #6E655A;   /* REQUIRED on interactive borders — 3.44:1 on --bg */
+
+  /* ---- Ink (text) ---- */
+  --ink:           #EDE6D8;   /* primary   — 15.8:1 on --bg, 14.0:1 on --surface-2 */
+  --ink-2:         #A9A092;   /* secondary —  7.6:1 on --bg,  6.7:1 on --surface-2 */
+  --ink-3:         #8A8174;   /* meta      —  5.1:1 on --bg,  4.5:1 on --surface-2 */
+
+  /* ---- Signal inks: verdicts, credibility bands, deltas ---- */
+  --ink-red:       #F26A50;   /* BLOCKED   / suspect / negative delta */
+  --ink-amber:     #E8A93C;   /* COMMENTED / watch */
+  --ink-green:     #3FBE7C;   /* APPROVED  / trusted / recovery */
+  --ink-steel:     #69A9E8;   /* actions, live state */
+  --ink-mimeo:     #B48BE8;   /* escalation, causal links, high similarity */
+
+  /* ---- Utility ---- */
+  --focus:         #F5C542;   /* 12.1:1 on --bg */
+  --shadow-hard:   rgba(0, 0, 0, 0.62);
+  --select-bg:     rgba(245, 197, 66, 0.22);
+  --tint:          12%;       /* signal-ink field tint strength */
+  --texture-ink:   rgba(237, 230, 216, 0.030);
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  /* ---- Ground: manila desk under a lamp ---- */
+  --bg:            #EDE7D9;
+  --surface:       #F6F1E5;
+  --surface-2:     #FCF9F1;
+  --surface-sunk:  #E2DAC7;
+
+  --line:          #D6CDBA;
+  --line-strong:   #BBB099;
+  --line-control:  #847A69;   /* 3.43:1 on --bg */
+
+  --ink:           #1A1712;   /* 14.5:1 on --bg */
+  --ink-2:         #4A4237;   /*  8.0:1 */
+  --ink-3:         #6E6455;   /*  4.7:1 */
+
+  --ink-red:       #9E2814;
+  --ink-amber:     #7A4E05;
+  --ink-green:     #155C38;
+  --ink-steel:     #1B5285;
+  --ink-mimeo:     #6B3FA8;
+
+  --focus:         #8A4B00;   /*  5.5:1 */
+  --shadow-hard:   rgba(58, 48, 32, 0.30);
+  --select-bg:     rgba(138, 75, 0, 0.18);
+  --tint:          12%;
+  --texture-ink:   rgba(26, 23, 18, 0.038);
+}
+
+/* ---- DESIGN.md §5 — Spacing, radii, rail metrics (verbatim) -------------- */
+
+:root {
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px; --s-5: 24px;
+  --s-6: 32px; --s-7: 48px; --s-8: 64px; --s-9: 96px;
+
+  --r-0: 0;    --r-1: 2px;  --r-2: 3px;  --r-3: 4px;   /* ← the maximum */
+
+  --gutter: var(--s-5);          /* 24px desktop */
+  --rail-w: 340px;
+  --stream-max: 860px;
+  --prose-max: 66ch;
+}
+@media (max-width: 767px) { :root { --gutter: var(--s-4); } }
+
+/* Elevation — hard offset only, never blurred (DESIGN.md §5). */
+:root {
+  --elev-1: 2px 2px 0 var(--shadow-hard);
+  --elev-2: 3px 3px 0 var(--shadow-hard);
+  --elev-3: 5px 5px 0 var(--shadow-hard);
+}
+
+/* =============================================================================
+   DERIVED ROLES — built from the inks above, added by frontend-builder.
+   Every tint uses color-mix per §1's hard rule so it tracks the theme.
+   ========================================================================== */
+
+:root {
+  /* ---- Type families (DESIGN.md §2) ---- */
+  --font-display: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
+  --font-sans: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* ---- Type scale (DESIGN.md §2, px for determinism) ---- */
+  --fs-display-xl: 64px;
+  --fs-display-l: 44px;
+  --fs-belief: 30px;
+  --fs-display-m: 30px;
+  --fs-title: 21px;
+  --fs-prose: 16.5px;
+  --fs-body: 15px;
+  --fs-body-sm: 13.5px;
+  --fs-label: 11px;
+  --fs-mono: 14px;
+  --fs-mono-sm: 12px;
+  --fs-numeral-xl: 72px;
+  --fs-numeral: 20px;
+  --fs-numeral-sm: 15px;
+
+  --lh-prose: 1.65;
+  --lh-body: 1.55;
+  --tracking-label: 0.16em;
+  --tracking-tight: -0.01em;
+
+  /* Outermost page width. The stream centers --stream-max inside it. */
+  --content-max: 1440px;
+  /* The Case File is a single readable narrative, not a layout (DESIGN.md §9.3). */
+  --case-max: 820px;
+
+  /* ---- Field tints (DESIGN.md §4) — never hardcoded rgba ---- */
+  --tint-red: color-mix(in oklab, var(--ink-red) var(--tint), transparent);
+  --tint-amber: color-mix(in oklab, var(--ink-amber) var(--tint), transparent);
+  --tint-green: color-mix(in oklab, var(--ink-green) var(--tint), transparent);
+  --tint-steel: color-mix(in oklab, var(--ink-steel) var(--tint), transparent);
+  --tint-mimeo: color-mix(in oklab, var(--ink-mimeo) var(--tint), transparent);
+
+  /* Translucent masthead ground — the only place a surface is see-through. */
+  --bg-overlay: color-mix(in oklab, var(--bg) 88%, transparent);
+
+  /* =========================================================================
+     MOTION (DESIGN.md §7)
+     -------------------------------------------------------------------------
+     Two rules govern everything below.
+
+     1. Only `transform` and `opacity` are ever animated over time. Both are
+        compositor properties, so a stagger burst of eight cards costs the main
+        thread nothing. Colour and shadow change only on discrete hover/focus
+        transitions, where there is no per-frame cost to pay.
+
+     2. Every curve has real acceleration. `ease-out` alone reads as software;
+        matter starts slow, gains speed, and is stopped by something. The stamp
+        curve overshoots because a struck stamp rebounds off the paper.
+     ====================================================================== */
+
+  /* Arrivals: fast attack, long settle. The workhorse. */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  /* Two-way state changes: symmetric accel/decel. */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  /* Departures: accelerate away, no settle. */
+  --ease-in: cubic-bezier(0.55, 0, 1, 0.45);
+  /* The stamp: overshoot past rest, rebound, settle. Nothing else uses this. */
+  --ease-stamp: cubic-bezier(0.34, 1.2, 0.44, 1);
+  /* A line drawing itself — near-linear with a soft stop. */
+  --ease-draw: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  --dur-micro: 120ms;   /* focus rings, glyph ticks */
+  --dur-hover: 150ms;   /* the interactive-card lift */
+  --dur-row: 220ms;     /* one stream row arriving */
+  --dur-card: 300ms;    /* an evidence card, a panel */
+  --dur-rail: 260ms;    /* the docket opening */
+  --dur-route: 260ms;   /* between routes */
+  --dur-stamp: 380ms;   /* the press — the longest UI motion in the product */
+  --dur-sweep: 700ms;   /* recovery sweep, number tween, sparkline draw */
+
+  /* The two deliberate dramatic beats. Both are silence, not movement. */
+  --dur-hesitation: 1500ms;
+  --stagger-burst: 90ms;
+}

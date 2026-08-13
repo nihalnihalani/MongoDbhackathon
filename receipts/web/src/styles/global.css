@@ -1,0 +1,1134 @@
+@import 'tailwindcss';
+@import './tokens.css';
+
+/* Tailwind v4 mapping — verbatim from DESIGN.md §1. `inline` is required so the
+   generated utilities reference the live custom properties and re-resolve on
+   theme flip. */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-sunk: var(--surface-sunk);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-line-control: var(--line-control);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-red: var(--ink-red);
+  --color-amber: var(--ink-amber);
+  --color-green: var(--ink-green);
+  --color-steel: var(--ink-steel);
+  --color-mimeo: var(--ink-mimeo);
+
+  --font-display: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
+  --font-sans: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --radius-none: 0px;
+  --radius-xs: 2px;
+  --radius-sm: 3px;
+  --radius-md: 4px;
+}
+
+@layer base {
+  /* =============================================================================
+     BASE
+     ========================================================================== */
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background-color: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* DESIGN.md §6 — ledger rules + fibrous noise. Threshold of perception. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+      repeating-linear-gradient(
+        to bottom,
+        transparent 0 27px,
+        var(--texture-ink) 27px 28px
+      ),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+    background-size: auto, 140px 140px;
+    opacity: 0.5;
+    mix-blend-mode: overlay;
+  }
+
+  /* App content sits above the texture layer. */
+  #root {
+    position: relative;
+    z-index: 1;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  p,
+  figure {
+    margin: 0;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  button {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  ::selection {
+    background: var(--select-bg);
+    color: var(--ink);
+  }
+
+  /* DESIGN.md §5 — one global focus treatment. */
+  :where(a, button, [tabindex], input, select, summary):focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: inherit;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-strong) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: var(--line-strong);
+    border: 3px solid var(--bg);
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+}
+
+/* Component classes live in the components layer so Tailwind utilities,
+   which come later, always win a conflict (e.g. `flex` over `.row-link`). */
+@layer components {
+  /* =============================================================================
+     TYPE PRIMITIVES (DESIGN.md §2)
+     ========================================================================== */
+
+  /* Instrument Serif is display-only: ≥24px, never bold. */
+  .display {
+    font-family: var(--font-display);
+    font-weight: 400;
+    line-height: 1.0;
+    letter-spacing: -0.015em;
+  }
+
+  .mono {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* The connective tissue of the whole product — it is what makes the UI read as
+     filed documentation rather than an app. */
+  .label {
+    font-family: var(--font-sans);
+    font-size: var(--fs-label);
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .label-accent {
+    color: var(--ink-steel);
+  }
+
+  /* Every element containing digits — the score must not jitter while it tweens. */
+  .num {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
+  .prose-measure {
+    max-width: var(--prose-max);
+  }
+
+  /* =============================================================================
+     SURFACES
+     ========================================================================== */
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--r-1);
+  }
+
+  .panel-head {
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+    padding: var(--s-3) var(--s-4);
+    border-bottom: 1px solid var(--line);
+    background: var(--surface-sunk);
+  }
+
+  /* DESIGN.md §8.2 — the agent's own voice. */
+  .memo {
+    background: var(--surface-2);
+    border: 1px solid var(--line-strong);
+    border-left: 3px solid var(--ink-2);
+    border-radius: var(--r-1);
+    box-shadow: var(--elev-2);
+    padding: var(--s-5);
+  }
+
+  /* =============================================================================
+     THE VERDICT STAMP (DESIGN.md §3)
+     -----------------------------------------------------------------------------
+     ONE stamp per case, at ONE size. Scarcity is the whole point: everywhere
+     else status is plain text, so the single stamp on the page carries all the
+     force. There are deliberately no size variants — if a second stamp seems
+     necessary somewhere, the answer is plain text, not a smaller stamp.
+
+     Rotation is assigned per verdict, never randomly, so the same verdict always
+     sits at the same angle and reads as one physical stamp reused. The tilt is
+     STATIC IDENTITY, not animation: it is present before, during, and after the
+     entrance, and it survives reduced motion.
+     ========================================================================== */
+
+  .stamp {
+    --stamp-rot: -3deg;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 30px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    /* +6px left: optical correction, since tracking adds trailing space. */
+    padding: 14px 28px 14px 34px;
+    border: 3px solid currentColor;
+    border-radius: 2px;
+    background: color-mix(in oklab, currentColor var(--tint), transparent);
+    transform: rotate(var(--stamp-rot));
+    /* Rubber ink sits into the paper and skips at the edges. */
+    mix-blend-mode: screen;
+    opacity: 0.94;
+    filter: url(#stamp-distress);
+  }
+
+  :root[data-theme='light'] .stamp {
+    mix-blend-mode: multiply;
+  }
+
+  /* A stamp die has an inner and an outer ring. */
+  .stamp::before {
+    content: '';
+    position: absolute;
+    inset: 5px;
+    border: 1px solid currentColor;
+    border-radius: 1px;
+    opacity: 0.75;
+    pointer-events: none;
+  }
+
+  @media (max-width: 767px) {
+    .stamp {
+      font-size: 20px;
+      letter-spacing: 0.18em;
+      padding: 10px 18px 10px 22px;
+      border-width: 2px;
+    }
+  }
+
+  .stamp--blocked {
+    --stamp-rot: -4.5deg;
+    color: var(--ink-red);
+  }
+
+  .stamp--commented {
+    --stamp-rot: -3deg;
+    color: var(--ink-amber);
+  }
+
+  .stamp--approved {
+    --stamp-rot: -2deg;
+    color: var(--ink-green);
+  }
+
+  /* =============================================================================
+     THE PRESS — the one piece of motion the whole demo is built toward.
+     -----------------------------------------------------------------------------
+     Scale ONLY. No fade, no rotation tween. A stamp does not materialise and it
+     does not swing in: it is suddenly there, hard, and it rocks to rest. Full
+     opacity from frame 0 is what makes it read as an impact rather than an
+     appearance — the moment you fade a stamp it becomes a notification.
+
+     1.18 → 0.965 → 1.012 → 1 is a real rebound: overshoot past the paper,
+     compress, bounce slightly, settle.
+     ========================================================================== */
+
+  @keyframes stamp-press {
+    0% {
+      transform: rotate(var(--stamp-rot)) scale(1.18);
+    }
+    55% {
+      transform: rotate(var(--stamp-rot)) scale(0.965);
+    }
+    78% {
+      transform: rotate(var(--stamp-rot)) scale(1.012);
+    }
+    100% {
+      transform: rotate(var(--stamp-rot)) scale(1);
+    }
+  }
+
+  .stamp--press {
+    animation: stamp-press var(--dur-stamp) var(--ease-stamp) both;
+  }
+
+  /* The shove that sells the weight. It rides the CONTAINER, never the stamp —
+     the paper takes the blow, not the die. */
+  @keyframes press-impact {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(2px);
+    }
+  }
+
+  .press-impact {
+    animation: press-impact 120ms var(--ease-in-out) 200ms both;
+  }
+
+  /* `investigating` has no stamp at all (DESIGN.md §3): nothing has been decided,
+     so nothing is stamped. Plain text, plus a pulsing square while it is live. */
+  .status-live {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-2);
+    color: var(--ink-steel);
+  }
+
+  .status-live::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: currentColor;
+    animation: live-pulse 1.8s var(--ease-in-out) infinite;
+  }
+
+  /* Removed entirely once the arc rests — a live indicator on a closed case is
+     a lie about the state of the system. */
+  @keyframes live-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.35;
+    }
+  }
+
+  /* =============================================================================
+     CREDIBILITY BANDS (DESIGN.md §4)
+     Color is never the only signal — the band label always renders beside it.
+     ========================================================================== */
+
+  .band-trusted {
+    --band: var(--ink-green);
+    --band-tint: var(--tint-green);
+  }
+  .band-watch {
+    --band: var(--ink-amber);
+    --band-tint: var(--tint-amber);
+  }
+  .band-suspect {
+    --band: var(--ink-red);
+    --band-tint: var(--tint-red);
+  }
+
+  /* =============================================================================
+     THE INVESTIGATION LOG (DESIGN.md §8.1)
+     -----------------------------------------------------------------------------
+     A 40px gutter with a continuous spine; the glyph punches a gap in it so the
+     spine appears to pass behind.
+     ========================================================================== */
+
+  .event-gutter {
+    position: relative;
+    width: 40px;
+    flex: 0 0 40px;
+  }
+
+  /* The spine, at x=20 within the gutter. */
+  .event-gutter::before {
+    content: '';
+    position: absolute;
+    left: 19px;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--line);
+  }
+
+  .event-glyph {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 20px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1;
+    /* the 3px gap punched around the glyph */
+    background: var(--surface);
+    box-shadow: 0 0 0 3px var(--surface);
+  }
+
+  @keyframes stream-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .event {
+    animation: stream-in var(--dur-row) var(--ease-out) both;
+  }
+
+  /* DESIGN.md §7.3 — retrieved memories deal out of a stack. */
+  @keyframes fan-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.985) rotate(var(--fan, 0deg));
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .evidence-card {
+    animation: fan-in 300ms var(--ease-out) both;
+  }
+
+  /* DESIGN.md §7.4 — the escalation is the plot twist. */
+  @keyframes escalation-flash {
+    from {
+      background-color: color-mix(in oklab, var(--ink-mimeo) 8%, transparent);
+    }
+    to {
+      background-color: transparent;
+    }
+  }
+
+  @keyframes border-sweep {
+    from {
+      transform: scaleY(0);
+    }
+    to {
+      transform: scaleY(1);
+    }
+  }
+
+  .escalation {
+    position: relative;
+    animation: escalation-flash 900ms ease-out both;
+  }
+
+  .escalation::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--ink-mimeo);
+    transform-origin: top;
+    animation: border-sweep 600ms var(--ease-out) both;
+  }
+
+  @keyframes caret-blink {
+    0%,
+    49% {
+      opacity: 1;
+    }
+    50%,
+    100% {
+      opacity: 0;
+    }
+  }
+
+  .caret::after {
+    content: '▌';
+    color: var(--ink-3);
+    animation: caret-blink 1.06s steps(2, start) infinite;
+  }
+
+  /* =============================================================================
+     LOADING / EMPTY (DESIGN.md §8.8)
+     No shimmer. Shimmer skeletons are the clearest tell of a template.
+     ========================================================================== */
+
+  .placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed var(--line-strong);
+    border-radius: var(--r-1);
+    color: var(--ink-3);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-sm);
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+  }
+
+  /* =============================================================================
+     BUTTONS (DESIGN.md §8.9)
+     ========================================================================== */
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--s-2);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    padding: 9px 16px;
+    border-radius: var(--r-2);
+    border: 1px solid var(--line-control);
+    background: transparent;
+    color: var(--ink-2);
+    transition:
+      color var(--dur-hover) ease,
+      border-color var(--dur-hover) ease,
+      background-color var(--dur-hover) ease;
+  }
+
+  .btn:hover {
+    color: var(--ink);
+    border-color: var(--ink);
+  }
+
+  .btn:active {
+    transform: translateY(1px);
+  }
+
+  .btn-primary {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--bg);
+  }
+
+  .btn-primary:hover {
+    background: transparent;
+    color: var(--ink);
+    border-color: var(--ink);
+  }
+
+  /* Interactive document rows share one hover feel. */
+  .row-link {
+    display: block;
+    transition:
+      background-color var(--dur-hover) ease,
+      border-color var(--dur-hover) ease,
+      box-shadow var(--dur-hover) ease;
+  }
+
+  .row-link:hover {
+    background: var(--surface-2);
+    border-color: var(--line-control);
+    box-shadow: var(--elev-1);
+  }
+
+  /* =============================================================================
+     LAYOUT
+     ========================================================================== */
+
+  .courtroom-grid {
+    display: grid;
+    align-items: start;
+    gap: var(--s-5);
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  @media (min-width: 1024px) {
+    .courtroom-grid[data-rail='open'] {
+      grid-template-columns: minmax(0, 1fr) var(--rail-w);
+    }
+    .courtroom-grid[data-rail='closed'] {
+      grid-template-columns: minmax(0, 1fr) 44px;
+    }
+  }
+
+  /* The collapsed rail: a 44px tab with its label set on its side, so the docket
+     stays discoverable without occupying the page. */
+  .rail-tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 44px;
+    padding: var(--s-4) 0;
+    border: 1px solid var(--line-control);
+    border-radius: var(--r-2);
+    background: var(--surface);
+    transition: background-color var(--dur-hover) ease;
+  }
+
+  .rail-tab:hover {
+    background: var(--surface-2);
+  }
+
+  @media (min-width: 1024px) {
+    .rail-tab {
+      align-self: stretch;
+      min-height: 12rem;
+    }
+    .rail-tab .label {
+      writing-mode: vertical-rl;
+    }
+  }
+
+  /* The control comparison (DESIGN.md §8.7). The two columns share one row
+     track so the eye can scan straight across — the comparison only works if
+     "scrutiny" on the left sits on exactly the same line as "scrutiny" on the
+     right. Two independent lists would drift by a few pixels and quietly
+     destroy the whole argument. */
+  /* Narrow: the two blocks simply stack, Liam first. The explicit grid-row /
+     grid-column placements the cells carry are inert outside a grid container,
+     so nothing needs to be unset. */
+  .control-grid {
+    display: block;
+  }
+
+  .control-col + .control-col {
+    margin-top: var(--s-6);
+  }
+
+  .control-rule {
+    display: none;
+    background: var(--line-strong);
+  }
+
+  @media (min-width: 860px) {
+    .control-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 1px minmax(0, 1fr);
+      column-gap: var(--s-6);
+      align-items: start;
+    }
+    /* The column wrapper dissolves so its cells become children of the shared
+       grid — this is what actually keeps the two sides on the same rows. */
+    .control-col {
+      display: contents;
+    }
+    .control-col + .control-col {
+      margin-top: 0;
+    }
+    .control-rule {
+      display: block;
+      grid-column: 2;
+      grid-row: 1 / -1;
+      width: 1px;
+    }
+  }
+
+  .dossier-grid {
+    display: grid;
+    align-items: start;
+    gap: var(--s-5);
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  @media (min-width: 1024px) {
+    .dossier-grid {
+      /* 62 / 38 — the ledger needs the room, the memories are the margin note. */
+      grid-template-columns: minmax(0, 62fr) minmax(0, 38fr);
+      gap: var(--s-6);
+    }
+  }
+
+  /* =============================================================================
+     ENTRANCES
+     ========================================================================== */
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .rise {
+    animation: rise 300ms var(--ease-out) both;
+  }
+
+  /* =============================================================================
+     THE RETRIEVAL BURST (DESIGN.md §7.3)
+     -----------------------------------------------------------------------------
+     Three cards arriving as one fast cluster. The read must be "it grabbed three
+     things at once", not "three things happened" — so the stagger is 90ms, tight
+     enough that the eye groups them, and each card is only 160ms so the group has
+     landed before the reader finishes registering the first.
+
+     Rise + settle, no rotation: these are records being dealt onto a desk.
+     --burst-i is set per card by the renderer.
+     ========================================================================== */
+
+  @keyframes burst-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .burst-item {
+    animation: burst-in 160ms var(--ease-out) both;
+    animation-delay: calc(var(--burst-i, 0) * var(--stagger-burst));
+  }
+
+  /* =============================================================================
+     THE STILLNESS BEAT (DESIGN.md §7.1, step 5)
+     -----------------------------------------------------------------------------
+     The single most important timing in the product. After the last routine
+     action, 1500ms in which NOTHING moves, and then the escalation lands into
+     the silence.
+
+     The dots are the one exception, and they are load-bearing: without a visible
+     marker a 1.5-second freeze reads as the demo hanging; with it, it reads as
+     the agent hesitating. They breathe three times and then STOP — a spinner
+     that never stops says "waiting", a pause that resolves says "thinking".
+     ========================================================================== */
+
+  .hesitation-dots {
+    display: inline-flex;
+    gap: 4px;
+    color: var(--ink-3);
+  }
+
+  .hesitation-dots span {
+    width: 3px;
+    height: 3px;
+    background: currentColor;
+    /* 3 iterations then hold — deliberately finite. */
+    animation: hesitate 500ms var(--ease-in-out) 3 both;
+  }
+
+  .hesitation-dots span:nth-child(2) {
+    animation-delay: 120ms;
+  }
+  .hesitation-dots span:nth-child(3) {
+    animation-delay: 240ms;
+  }
+
+  @keyframes hesitate {
+    0%,
+    100% {
+      opacity: 0.25;
+      transform: none;
+    }
+    50% {
+      opacity: 1;
+      transform: translateY(-2px);
+    }
+  }
+
+  /* =============================================================================
+     CAUSALITY (DESIGN.md §8.3)
+     -----------------------------------------------------------------------------
+     A log is RAG; a causal chain is an agent. The judge has to SEE that
+     retrieval changed behaviour rather than merely preceding it.
+
+     Two mechanisms: a one-shot pulse on the causing card at the moment the
+     caused row lands, and a reciprocal highlight whenever either end is hovered
+     or focused. Reciprocity is what makes it legible rather than decorative.
+     ========================================================================== */
+
+  .is-linked {
+    border-left: 2px solid var(--ink-mimeo) !important;
+    background: color-mix(in oklab, var(--ink-mimeo) 8%, var(--surface-2)) !important;
+  }
+
+  /* Colour only — the pulse must not move the card, or a burst of three pulsing
+     at once turns the stream into a jelly. */
+  @keyframes cause-pulse {
+    0%,
+    100% {
+      background-color: var(--surface-2);
+    }
+    35% {
+      background-color: color-mix(in oklab, var(--ink-mimeo) 22%, var(--surface-2));
+    }
+  }
+
+  .cause-pulse {
+    animation: cause-pulse 620ms var(--ease-in-out) both;
+  }
+
+  .causal-link {
+    color: var(--ink-mimeo);
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-underline-offset: 3px;
+    transition: opacity var(--dur-micro) var(--ease-out);
+  }
+
+  .causal-link:hover {
+    opacity: 0.75;
+  }
+
+  /* The connector drawn in the gutter at >=1024px, tying cause to effect. */
+  .causal-connector path {
+    stroke: var(--ink-mimeo);
+    stroke-width: 1;
+    fill: none;
+    opacity: 0.45;
+    stroke-dasharray: var(--len, 400);
+    stroke-dashoffset: var(--len, 400);
+    animation: draw-connector 520ms var(--ease-draw) both;
+  }
+
+  @keyframes draw-connector {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  /* =============================================================================
+     THE LEDGER (DESIGN.md §4)
+     -----------------------------------------------------------------------------
+     The rows reveal in sequence so the sum visibly COMPOSES rather than simply
+     being present. A judge watching the column build is a judge who believes the
+     arithmetic; a column that is just there is a number to be taken on faith.
+     ========================================================================== */
+
+  .ledger-row {
+    animation: rise var(--dur-row) var(--ease-out) both;
+    animation-delay: calc(var(--row-i, 0) * 90ms);
+  }
+
+  /* Recovery is loud; punishment is quiet. That asymmetry is a deliberate
+     argument about the product: the score is earnable, not a permanent mark. */
+  @keyframes recovery-sweep {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  .recovery-sweep {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .recovery-sweep::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--tint-green);
+    transform-origin: left;
+    animation: recovery-sweep var(--dur-sweep) var(--ease-out) both;
+    animation-delay: calc(var(--row-i, 0) * 90ms);
+  }
+
+  /* A delta chip flashes its band colour once as it lands, then rests. */
+  @keyframes delta-flash {
+    0% {
+      transform: scale(1);
+    }
+    30% {
+      transform: scale(1.12);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  .delta-flash {
+    animation: delta-flash 380ms var(--ease-stamp) both;
+    animation-delay: calc(var(--row-i, 0) * 90ms);
+  }
+
+  /* =============================================================================
+     SPARKLINE — draws itself on mount (stroke-dashoffset)
+     -----------------------------------------------------------------------------
+     The line is a history, so it should be seen accumulating. The path length is
+     measured at runtime and written to --len, because a hardcoded dasharray
+     either clips a long line or leaves a short one visibly waiting.
+     ========================================================================== */
+
+  .spark-draw {
+    stroke-dasharray: var(--len, 300);
+    stroke-dashoffset: var(--len, 300);
+    animation: spark-draw var(--dur-sweep) var(--ease-draw) both;
+  }
+
+  @keyframes spark-draw {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  .spark-endpoint {
+    animation: rise 200ms var(--ease-out) both;
+    animation-delay: var(--dur-sweep);
+  }
+
+  /* The threshold rule fades in behind the line rather than drawing with it —
+     it is context, not content. */
+  .spark-threshold {
+    animation: fade-in 400ms var(--ease-out) both;
+    animation-delay: 200ms;
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* =============================================================================
+     MICRO-INTERACTIONS
+     -----------------------------------------------------------------------------
+     Lifts are transform-only so they composite; they are applied ONLY to things
+     that actually navigate somewhere. A hover state on a non-interactive card is
+     a lie about affordance, and this product has a lot of cards.
+     ========================================================================== */
+
+  .lift {
+    transition:
+      transform var(--dur-hover) var(--ease-out),
+      border-color var(--dur-hover) var(--ease-out),
+      background-color var(--dur-hover) var(--ease-out);
+  }
+
+  .lift:hover {
+    transform: translateY(-1px);
+    border-color: var(--line-control);
+  }
+
+  .lift:active {
+    transform: translateY(1px);
+    transition-duration: 60ms;
+  }
+
+  /* The scrutiny meter fills with easing, notch by notch, so a jump from normal
+     to maximum reads as a decision being taken rather than a value being set. */
+  .scrutiny-notch {
+    transition:
+      background-color var(--dur-card) var(--ease-out),
+      transform var(--dur-card) var(--ease-out);
+    transform-origin: left;
+  }
+
+  .scrutiny-notch[data-on='true'] {
+    animation: notch-fill var(--dur-card) var(--ease-out) both;
+    animation-delay: calc(var(--notch-i, 0) * 70ms);
+  }
+
+  @keyframes notch-fill {
+    from {
+      transform: scaleX(0.2);
+      opacity: 0.4;
+    }
+    to {
+      transform: scaleX(1);
+      opacity: 1;
+    }
+  }
+
+  /* =============================================================================
+     ROUTE TRANSITION
+     -----------------------------------------------------------------------------
+     DESIGN.md §7.7 bans route transitions because "on a demo, a page transition
+     reads as latency" — and that reasoning is correct about anything that
+     DELAYS content. So this fades 0.72 → 1 rather than 0 → 1: the page is fully
+     laid out and legible on the very first frame, and the last 28% of opacity
+     arrives over 140ms purely to soften the cut. Nothing is ever withheld.
+     ========================================================================== */
+
+  .route-enter {
+    animation: route-enter 140ms var(--ease-out) both;
+  }
+
+  @keyframes route-enter {
+    from {
+      opacity: 0.72;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* The judgment is the only event that breaks the gutter and spans the full
+     stream column (DESIGN.md §7.5). */
+  .judgment-full {
+    padding: var(--s-5) var(--s-5) var(--s-6);
+    border-top: 1px solid var(--line-strong);
+    border-bottom: 1px solid var(--line-strong);
+    background: var(--surface);
+  }
+
+}
+
+/* =============================================================================
+   REDUCED MOTION (DESIGN.md §7.8)
+   -----------------------------------------------------------------------------
+   The hero of this product IS animation, so this is a required test path, not a
+   fallback. The rule is: FULL EXPERIENCE, INSTANT RENDERING, ZERO MOTION.
+   Everything a judge needs to see must be present and legible — the complete
+   stream, the stamp, the final ledger — it simply arrives all at once.
+
+   Five further behaviours cannot be reached from CSS and are handled in JS
+   (see lib/stream.ts and the hooks): the arc does not play at all, the
+   typewriter renders whole, number tweens snap, the 1500ms stillness beat is
+   never inserted, and the live indicator holds a static opacity.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* The tilt is identity, not motion — a stamp with no angle is a badge. */
+  .stamp,
+  .stamp--press {
+    transform: rotate(var(--stamp-rot)) !important;
+  }
+
+  /* Anything whose resting state is expressed only through an animation has to
+     be pinned to its finished value, or "no motion" becomes "never arrives". */
+  .spark-draw {
+    stroke-dashoffset: 0 !important;
+  }
+
+  .causal-connector path {
+    stroke-dashoffset: 0 !important;
+  }
+
+  .recovery-sweep::after {
+    transform: scaleX(1) !important;
+  }
+
+  .scrutiny-notch[data-on='true'] {
+    transform: none !important;
+    opacity: 1 !important;
+  }
+
+  .caret::after {
+    content: '';
+  }
+
+  .hesitation-dots span {
+    opacity: 0.7;
+  }
+
+  .status-live::before {
+    opacity: 0.7;
+  }
+}
+
+/* =============================================================================
+   UTILITIES
+   ========================================================================== */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: fixed;
+  top: var(--s-2);
+  left: var(--s-2);
+  z-index: 200;
+  transform: translateY(-200%);
+  background: var(--ink);
+  color: var(--bg);
+  padding: 9px 16px;
+  border-radius: var(--r-2);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+}
+
+.skip-link:focus {
+  transform: none;
+}
