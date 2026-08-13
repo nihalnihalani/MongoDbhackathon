@@ -1,0 +1,54 @@
+{
+  "contributorContexts": {
+    "kevin": {
+      "credibility": 46,
+      "history": [
+        { "pr": 391, "summary": "Authentication regression", "delta": -18 },
+        { "pr": 404, "summary": "Missing authorization check", "delta": -12 },
+        { "pr": 433, "summary": "Clean cache fix", "delta": 4 }
+      ]
+    }
+  },
+  "memories": [
+    {
+      "kind": "incident",
+      "summary": "Session expiry checks previously failed at exact expiration boundaries.",
+      "evidence": ["incident-88", "src/auth/session.ts"]
+    },
+    {
+      "kind": "agent_experience",
+      "summary": "A prior review missed milliseconds-versus-seconds conversion in token lifetime code.",
+      "evidence": ["review-391"]
+    }
+  ],
+  "pullRequestDiffs": {
+    "481": {
+      "files": [
+        {
+          "path": "src/auth/session.ts",
+          "patch": "- return session.expiresAt > Date.now();\n+ const ttl = session.expiresAt - session.createdAt;\n+ return ttl > Date.now() - session.createdAt;"
+        },
+        {
+          "path": "src/middleware/permissions.ts",
+          "patch": "+ if (!isSessionValid(session)) return deny();"
+        }
+      ]
+    }
+  },
+  "pullRequestChecks": {
+    "481": {
+      "status": "success",
+      "checks": ["lint", "unit-tests"],
+      "missing": ["session expiration boundary test"]
+    }
+  },
+  "files": {
+    "src/auth/session.ts": "export function isSessionValid(session) { const ttl = session.expiresAt - session.createdAt; return ttl > Date.now() - session.createdAt; }",
+    "src/middleware/permissions.ts": "export function authorize(session) { if (!isSessionValid(session)) return deny(); return allow(); }"
+  },
+  "gitHistory": {
+    "src/auth/session.ts": [
+      { "sha": "old391", "author": "kevin", "summary": "Refactor token expiration" }
+    ]
+  }
+}

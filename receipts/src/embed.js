@@ -1,7 +1,8 @@
 /**
- * Embeddings run locally (all-MiniLM-L6-v2, 384-dim) so the immune system keeps
- * working on venue wifi and needs no API key. Swap in a hosted embedder only if
- * one is configured.
+ * Embeddings run locally (all-MiniLM-L6-v2, 384-dim) so retrieval keeps working
+ * on venue wifi and needs no API key. Embeddings RETRIEVE related incidents;
+ * they never determine fault — attribution requires the failing canary case
+ * plus operator confirmation.
  */
 import { pipeline } from '@huggingface/transformers';
 

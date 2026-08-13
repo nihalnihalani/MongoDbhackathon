@@ -3,7 +3,14 @@ mongodb-airbnb-workshop/
 
 # Never commit credentials (subprojects also ignore these; defense in depth)
 .env
+.env.local
 .mcp.json
+
 node_modules/
+dist/
+.murmur/
 *.log
 .DS_Store
+
+# local-only fallback, not part of the submission
+scapegoat/

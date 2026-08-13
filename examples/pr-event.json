@@ -1,0 +1,14 @@
+{
+  "id": "github:acme/web:pull_request:481:opened",
+  "type": "pull_request_opened",
+  "repository": "acme/web",
+  "occurredAt": "2026-08-13T20:00:00.000Z",
+  "contributor": "kevin",
+  "pullRequestNumber": 481,
+  "title": "Use TTL when validating sessions",
+  "description": "Changes session expiration handling and permission middleware.",
+  "metadata": {
+    "headSha": "abc481",
+    "baseBranch": "main"
+  }
+}

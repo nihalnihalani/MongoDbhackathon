@@ -1,0 +1,21 @@
+{
+  "name": "receipts",
+  "version": "1.0.0",
+  "description": "Persistent review confidence — the reviewer dies, the lesson ships.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "seed": "node src/seed.js",
+    "server": "node src/server.js",
+    "reviewer": "node src/reviewer.js",
+    "verify": "node src/proof.js",
+    "llm-smoke": "node src/llm.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@huggingface/transformers": "^4.2.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "mongodb": "^7.5.0"
+  }
+}

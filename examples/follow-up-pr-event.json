@@ -1,0 +1,14 @@
+{
+  "id": "github:acme/web:pull_request:482:opened",
+  "type": "pull_request_opened",
+  "repository": "acme/web",
+  "occurredAt": "2026-08-14T18:00:00.000Z",
+  "contributor": "kevin",
+  "pullRequestNumber": 482,
+  "title": "Keep refreshable sessions active",
+  "description": "Allows requests with a refresh token to continue through session validation.",
+  "metadata": {
+    "headSha": "abc482",
+    "baseBranch": "main"
+  }
+}
