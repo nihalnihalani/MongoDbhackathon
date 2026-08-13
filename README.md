@@ -9,12 +9,6 @@
 <br/>
 
 [![MongoDB Persistent Context Sprint Hackathon](https://img.shields.io/badge/MongoDB%20Persistent%20Context%20Sprint-Cerebral%20Valley%20%C2%B7%20SF-00ED64?style=for-the-badge&logo=mongodb&logoColor=white)](https://cerebralvalley.ai/e/persistent-context-sprint-hackathon)
-[![Theme](https://img.shields.io/badge/Theme-No%20Cold%20Start-8B5CF6?style=for-the-badge)](#-what-it-is)
-[![Status](https://img.shields.io/badge/status-live%20demo%20%2B%20fixture%20UI-2EA043?style=for-the-badge)](#-two-surfaces)
-
-*Pier 48, San Francisco · `.local` Build Fest · August 13, 2026*
-
-<br/>
 
 **Powered by**
 
@@ -145,20 +139,6 @@ Embeddings run **locally** (`Xenova/all-MiniLM-L6-v2`, 384-dim) — no embedding
 
 ---
 
-## ⏱️ The one-minute demo
-
-| # | Beat | What proves it |
-|---|---|---|
-| 1 | `agent-kevin` submits **PR #481**, a payment-rounding change. No history, no contract → reviewer #1 gives it the **standard** review. | Baseline: the cold reviewer approves. |
-| 2 | Operator ships it. The canary **executes the function** and catches `roundMoney(1.005) → 1.00` instead of `1.01`. | Real execution, not a scripted string. |
-| 3 | Operator confirms the causal linkage. **One transaction** writes Incident #41, marks the receipt failed, and publishes `payments/rounding → boundary-case test required`. | Atomic lesson. |
-| 4 | **Reviewer #1 is killed on stage.** The stage screen shows it dead. | The process is disposable. |
-| 5 | Reviewer #2 boots with **zero prior messages**, reads the contract from MongoDB, and **blocks PR #482**. | 🎯 *The kill shot.* Same input, different action — because of the database. |
-| 6 | An unrelated docs PR from `agent-maya` passes normally. | Not a blunt lockdown. |
-| 7 | Operator attaches boundary-test evidence + corrected code. The successor **re-executes** the predeclared canary cases, records the contract satisfied, and unlocks. | Recovery is real and evidence-gated. |
-
----
-
 ## 🖥️ Two surfaces
 
 | Surface | Path | What it is |
@@ -244,13 +224,9 @@ MongoDbhackathon/
 
 ---
 
-## 🏆 The hackathon
+## 🏆 Team
 
-**[MongoDB Persistent Context Sprint Hackathon](https://cerebralvalley.ai/e/persistent-context-sprint-hackathon)** — Cerebral Valley · Pier 48, San Francisco · `.local` Build Fest · August 13, 2026. Theme: **No Cold Start**.
-
-Judged on Creativity (35%) · Technologies (25%) · Impact (20%) · Demo (20%). RECEIPTS uses MongoDB Atlas, Fireworks, and OpenRouter — the partners that are actually in the code.
-
-**Built by** [@nihalnihalani](https://github.com/nihalnihalani) · [@lachenbach](https://github.com/lachenbach) (Liam Achenbach) · [@gorajing](https://github.com/gorajing) (Jin Choi)
+**Built by** [@nihalnihalani](https://github.com/nihalnihalani) · [@lachenbach](https://github.com/lachenbach) (Liam Achenbach) · [@gorajing](https://github.com/gorajing) (Jin Choi) — for the [MongoDB Persistent Context Sprint Hackathon](https://cerebralvalley.ai/e/persistent-context-sprint-hackathon), built entirely during the event.
 
 ---
 
