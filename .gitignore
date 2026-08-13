@@ -7,3 +7,6 @@ mongodb-airbnb-workshop/
 node_modules/
 *.log
 .DS_Store
+
+# local-only fallback, not part of the submission
+scapegoat/
