@@ -129,6 +129,22 @@ export interface ReviewDecision {
   selfAssessment: string | null;
 }
 
+export interface LearningCommitResult {
+  applied: boolean;
+  eventId: string;
+  credibilityUpdated: boolean;
+  memoriesStored: number;
+}
+
+/** Durable learning boundary. MongoDB and local JSON stores can implement the same contract. */
+export interface AgentLearningStore {
+  commitLearning(
+    event: ReviewEvent,
+    decision: ReviewDecision,
+    signal?: AbortSignal,
+  ): Promise<LearningCommitResult>;
+}
+
 export interface AgentTraceEntry {
   step: number;
   kind: "model" | "tool";
@@ -142,6 +158,7 @@ export interface AgentRunResult {
   decision: ReviewDecision;
   trace: AgentTraceEntry[];
   usage: TokenUsage;
+  learning?: LearningCommitResult;
 }
 
 export type AgentProgressEvent =
@@ -149,4 +166,5 @@ export type AgentProgressEvent =
   | { type: "model_end"; step: number; finishReason: string | null; toolCount: number }
   | { type: "tool_start"; step: number; name: string; callId: string; arguments: JsonObject }
   | { type: "tool_end"; step: number; name: string; callId: string; ok: boolean }
-  | { type: "decision"; step: number; decision: ReviewDecision };
+  | { type: "decision"; step: number; decision: ReviewDecision }
+  | { type: "learning_committed"; step: number; result: LearningCommitResult };

@@ -178,3 +178,33 @@ test("fails boundedly if the model never finishes", async () => {
 
   await assert.rejects(harness.run(event), AgentRunError);
 });
+
+test("commits learning after a successful decision", async () => {
+  const model = new ScriptedModel([toolResponse("finish_review", finalDecision, 1)]);
+  const commits: string[] = [];
+  const harness = new AgentHarness({
+    model,
+    tools: [],
+    learningStore: {
+      async commitLearning(committedEvent, decision) {
+        commits.push(`${committedEvent.id}:${decision.action}`);
+        return {
+          applied: true,
+          eventId: committedEvent.id,
+          credibilityUpdated: true,
+          memoriesStored: decision.memoriesToStore.length,
+        };
+      },
+    },
+  });
+
+  const result = await harness.run(event);
+
+  assert.deepEqual(commits, ["event-1:block"]);
+  assert.deepEqual(result.learning, {
+    applied: true,
+    eventId: "event-1",
+    credibilityUpdated: true,
+    memoriesStored: 1,
+  });
+});

@@ -4,6 +4,7 @@
   "description": "Persistent review confidence — the reviewer dies, the lesson ships.",
   "type": "module",
   "scripts": {
+    "test": "node --test test/*.test.js",
     "seed": "node src/seed.js",
     "server": "node src/server.js",
     "reviewer": "node src/reviewer.js",

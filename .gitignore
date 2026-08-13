@@ -8,6 +8,7 @@ mongodb-airbnb-workshop/
 
 node_modules/
 dist/
+.murmur/
 *.log
 .DS_Store
 

@@ -1,0 +1,36 @@
+{
+  "contributorContexts": {
+    "kevin": {
+      "credibility": 46,
+      "history": []
+    }
+  },
+  "memories": [],
+  "pullRequestDiffs": {
+    "482": {
+      "files": [
+        {
+          "path": "src/auth/session.ts",
+          "patch": "- return session.expiresAt > Date.now();\n+ return session.expiresAt > Date.now() || Boolean(session.refreshToken);"
+        }
+      ]
+    }
+  },
+  "pullRequestChecks": {
+    "482": {
+      "status": "success",
+      "checks": ["lint", "unit-tests"],
+      "missing": ["expired session with refresh token", "session expiration boundary test"]
+    }
+  },
+  "files": {
+    "src/auth/session.ts": "export function isSessionValid(session) { return session.expiresAt > Date.now() || Boolean(session.refreshToken); }",
+    "src/middleware/permissions.ts": "export function authorize(session) { if (!isSessionValid(session)) return deny(); return allow(); }"
+  },
+  "gitHistory": {
+    "src/auth/session.ts": [
+      { "sha": "abc481", "author": "kevin", "summary": "Use TTL when validating sessions" },
+      { "sha": "old391", "author": "kevin", "summary": "Refactor token expiration" }
+    ]
+  }
+}

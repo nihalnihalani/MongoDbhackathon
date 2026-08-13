@@ -121,7 +121,7 @@ export async function confirmIncident(prNum, overrides = {}) {
 /**
  * Attach evidence (and optionally the fixed code) and requeue for review —
  * this is how proof debt gets paid. Evidence without a fix won't survive the
- * deep critic, which re-reviews with the incident in context.
+ * deep review, which re-reviews with the incident in context.
  */
 export async function addEvidence(prNum, evidenceKey, code = null) {
   const r = await receipts().findOneAndUpdate(

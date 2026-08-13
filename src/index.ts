@@ -8,3 +8,4 @@ export * from "./agent/prompt.js";
 export * from "./agent/schema.js";
 export * from "./agent/tools.js";
 export * from "./snapshot-data-source.js";
+export * from "./json-learning-store.js";

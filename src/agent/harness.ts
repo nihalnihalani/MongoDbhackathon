@@ -3,6 +3,7 @@ import type {
   AgentProgressEvent,
   AgentRunResult,
   AgentTraceEntry,
+  AgentLearningStore,
   ChatMessage,
   ChatModel,
   ChatRequest,
@@ -33,6 +34,7 @@ export interface AgentHarnessOptions {
   temperature?: number;
   maxTokens?: number;
   onProgress?: (event: AgentProgressEvent) => void | Promise<void>;
+  learningStore?: AgentLearningStore;
 }
 
 function toolDefinition(tool: AgentTool): ToolDefinition {
@@ -200,7 +202,20 @@ export class AgentHarness {
 
       if (decision) {
         await this.emit({ type: "decision", step, decision });
-        return { event, decision, trace, usage };
+        const result: AgentRunResult = { event, decision, trace, usage };
+        if (this.options.learningStore) {
+          try {
+            const learning = await this.options.learningStore.commitLearning(event, decision, signal);
+            result.learning = learning;
+            await this.emit({ type: "learning_committed", step, result: learning });
+          } catch (error) {
+            const detail = error instanceof Error ? `: ${error.message}` : "";
+            throw new AgentRunError(`The review completed, but durable learning could not be committed${detail}`, {
+              cause: error,
+            });
+          }
+        }
+        return result;
       }
     }
     throw new AgentRunError(`Agent did not call finish_review within ${this.options.maxSteps} model steps`);

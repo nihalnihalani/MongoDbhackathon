@@ -47,19 +47,18 @@ export function makeReviewer(generation) {
       }
     }
 
-    // Depth follows history: contract-bearing subsystems and incident-similar
-    // PRs get the frontier critic (OpenRouter); everything else gets the fast
-    // standard pass (Fireworks).
+    // Depth follows history. The selected provider runs either prompt; provider
+    // choice is deployment configuration, not review policy.
     const escalate = active.length > 0 || similar.some((s) => s.similarity >= 0.75);
 
     // Evidence is executed, not taken on faith: run the PR's own boundary
-    // cases and give the critic real results instead of speculation.
+    // cases and give the model real results instead of speculation.
     const executed = escalate && pr.fnName && pr.canaryCases?.length ? runCanary(pr) : null;
 
     let result = escalate ? await deepReview(pr, similar, executed) : await standardReview(pr);
 
     // Executed, passing contract evidence outranks model opinion — that is the
-    // org's rule, and the critic's reservations stay on the record.
+    // org's rule, and the model's reservations stay on the record.
     const evidenceMet = active.length > 0 && active.every((c) => pr.evidence.includes(c.evidenceKey));
     if (escalate && executed?.ok && evidenceMet && result.verdict === 'concerns') {
       result = {

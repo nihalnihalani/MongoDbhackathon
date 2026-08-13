@@ -1,6 +1,6 @@
 # MURMUR agent harness
 
-The package owns model inference and autonomous decision-making. It intentionally does not own HTTP routes, frontend state, GitHub authentication, MongoDB queries, or persistence. Those systems implement one interface and decide what to do with the returned proposals.
+The package owns model inference and autonomous decision-making. It includes an atomic local JSON learning store for standalone demos, but intentionally does not own HTTP routes, frontend state, GitHub authentication, or MongoDB queries. Production systems can implement the same data-source and learning-store interfaces with their own persistence.
 
 ## Runtime flow
 
@@ -56,6 +56,7 @@ import {
   createDataTools,
   createModel,
   loadAgentEnvironment,
+  type AgentLearningStore,
   type ReviewDataSource,
   type ReviewEvent,
 } from "murmur-agent";
@@ -69,6 +70,11 @@ const dataSource: ReviewDataSource = {
   getGitHistory: (input, signal) => github.getHistory(input, signal),
 };
 
+const learningStore: AgentLearningStore = {
+  commitLearning: (event, decision, signal) =>
+    memory.commitAgentLearning(event, decision, signal),
+};
+
 const config = loadAgentEnvironment();
 const model = createModel(config);
 const tools = createDataTools(dataSource);
@@ -76,15 +82,15 @@ const tools = createDataTools(dataSource);
 const agent = new AgentHarness({
   model,
   tools,
+  learningStore,
   maxSteps: config.maxSteps,
   onProgress: (event) => streamToClient(event),
 });
 
 const result = await agent.run(webhookEvent as ReviewEvent, request.signal);
 
-// Backend-owned side effects happen after the run and can be transactional.
+// Review publication remains a backend-owned side effect.
 await reviews.save(result.decision);
-await memory.saveProposals(result.decision.memoriesToStore);
 ```
 
 Every adapter result must be JSON-serializable. The harness validates model-generated arguments locally against each tool schema before invoking the adapter. Tool failures are returned to the model as evidence so it can recover, and oversized results are bounded before being added to context.
@@ -98,9 +104,37 @@ Every adapter result must be JSON-serializable. The harness validates model-gene
 - the original event;
 - an evidence-grounded `ReviewDecision`;
 - a compact trace of model/tool activity and durations;
-- aggregate model token usage.
+- aggregate model token usage;
+- the optional durable-learning commit result.
 
-The decision has an action, confidence, findings with evidence citations, an optional proposed credibility change, durable memory proposals, and an optional agent self-assessment. These are proposals only—the harness never posts a review or writes memory itself.
+The decision has an action, confidence, findings with evidence citations, an optional proposed credibility change, durable memory proposals, and an optional agent self-assessment. The harness never posts a review. When an `AgentLearningStore` is supplied, it commits learning only after a schema-valid `finish_review` decision.
+
+## Durable learning across runs
+
+The CLI persists learning by default to `.murmur/agent-state.json`. The gitignored state contains learned contributor context, memories, and processed event IDs. Current diffs, checks, files, and git history still come from the snapshot supplied to each run.
+
+```bash
+# Uses the default durable state file.
+npm run agent -- \
+  --event examples/pr-event.json \
+  --snapshot examples/review-snapshot.json
+
+# Select an explicit state file for a demo storyline.
+npm run agent -- \
+  --event examples/follow-up-pr-event.json \
+  --snapshot examples/follow-up-review-snapshot.json \
+  --state .murmur/demo-state.json
+
+# Disable learning persistence for a one-off review.
+npm run agent -- \
+  --event examples/pr-event.json \
+  --snapshot examples/review-snapshot.json \
+  --no-persist
+```
+
+Each event ID is applied at most once. Contributor learning is repository-scoped. Credibility commits use optimistic validation: if another run changed the durable score after the model read it, the stale proposal is rejected rather than overwriting newer learning. Writes use a same-directory temporary file and atomic rename.
+
+This store is for the standalone inference demo and development. RECEIPTS remains authoritative for MongoDB-backed, operator-confirmed incidents and binding subsystem review contracts. A model-proposed credibility change never creates or bypasses a RECEIPTS contract.
 
 ## Adding a tool
 
@@ -127,12 +161,14 @@ Only register mutating tools if the surrounding product explicitly intends the m
 
 ## Local demo and verification
 
-The snapshot adapter supports a live model demo with no database or GitHub dependency:
+The snapshot and local-learning adapters support a live model demo with no database or GitHub dependency:
 
 ```bash
 npm run agent -- \
   --event examples/pr-event.json \
   --snapshot examples/review-snapshot.json
 ```
+
+Use a new `.murmur/*.json` path when you intentionally want a fresh history. Reusing the same event ID reports `already applied` instead of duplicating its credibility change or memories.
 
 The included tests use scripted models and mocked HTTP responses, so `npm test` does not spend provider credits. A real smoke test requires provider keys and is intentionally not part of the default suite.

@@ -93,7 +93,7 @@ async function main() {
   const r3 = await gen2.reviewOne(pr3);
   check(r3.verdict === 'approve', 'unrelated documentation PR passes normally');
 
-  // ---- Pay the debt: the test evidence AND the fix, or the deep critic balks ----
+  // ---- Pay the debt: the test evidence AND the fix, or the deep review balks ----
   const updated = await addEvidence(pr2.prNum, 'boundary-tests',
     'function roundRefund(amount) {\n  return Math.round(Number((amount * 100).toPrecision(12))) / 100;\n}');
   const r4 = await gen2.reviewOne(updated);

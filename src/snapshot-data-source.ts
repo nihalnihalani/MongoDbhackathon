@@ -21,11 +21,11 @@ export interface ReviewSnapshot {
 export class SnapshotDataSource implements ReviewDataSource {
   constructor(private readonly snapshot: ReviewSnapshot) {}
 
-  async getContributorContext(input: ContributorContextInput): Promise<JsonValue> {
+  async getContributorContext(input: ContributorContextInput, _signal?: AbortSignal): Promise<JsonValue> {
     return this.snapshot.contributorContexts?.[input.contributor] ?? { found: false };
   }
 
-  async searchOrganizationalMemory(input: MemorySearchInput): Promise<JsonValue> {
+  async searchOrganizationalMemory(input: MemorySearchInput, _signal?: AbortSignal): Promise<JsonValue> {
     const terms = input.query.toLowerCase().split(/\W+/).filter((term) => term.length > 2);
     const memories = this.snapshot.memories ?? [];
     return memories
@@ -35,19 +35,19 @@ export class SnapshotDataSource implements ReviewDataSource {
       .map(({ memory }) => memory);
   }
 
-  async getPullRequestDiff(input: PullRequestInput): Promise<JsonValue> {
+  async getPullRequestDiff(input: PullRequestInput, _signal?: AbortSignal): Promise<JsonValue> {
     return this.snapshot.pullRequestDiffs?.[String(input.pullRequestNumber)] ?? { found: false };
   }
 
-  async getPullRequestChecks(input: PullRequestInput): Promise<JsonValue> {
+  async getPullRequestChecks(input: PullRequestInput, _signal?: AbortSignal): Promise<JsonValue> {
     return this.snapshot.pullRequestChecks?.[String(input.pullRequestNumber)] ?? { found: false };
   }
 
-  async readRepositoryFile(input: RepositoryFileInput): Promise<JsonValue> {
+  async readRepositoryFile(input: RepositoryFileInput, _signal?: AbortSignal): Promise<JsonValue> {
     return this.snapshot.files?.[input.path] ?? { found: false };
   }
 
-  async getGitHistory(input: GitHistoryInput): Promise<JsonValue> {
+  async getGitHistory(input: GitHistoryInput, _signal?: AbortSignal): Promise<JsonValue> {
     return this.snapshot.gitHistory?.[input.path] ?? [];
   }
 }

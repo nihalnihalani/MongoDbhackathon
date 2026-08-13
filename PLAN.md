@@ -102,17 +102,35 @@ There are currently two runnable surfaces in the repository:
 | Surface | Implemented role | Current boundary |
 |---|---|---|
 | `receipts/` JavaScript app | Canonical hackathon demo: MongoDB state, review contracts, canary, disposable reviewer and live UI | Uses its own deterministic contract gate and standard/deep review functions |
-| Root TypeScript inference harness | Provider-neutral, bounded multi-turn investigation using Fireworks or OpenRouter over a `ReviewDataSource` | Snapshot-backed today; no MongoDB, GitHub or RECEIPTS adapter is wired |
+| Root TypeScript inference harness | Provider-neutral, bounded multi-turn investigation using Fireworks or OpenRouter over a `ReviewDataSource`; persists learned context across runs in local JSON | No MongoDB, GitHub or RECEIPTS adapter is wired |
 
 The root harness preserves useful autonomous investigation work without changing
-the product contract. The integration target is to call it as the model-backed
-critic **after** RECEIPTS has checked binding review contracts. It must not own
+the product contract. The integration target is to call it as the autonomous
+reviewer **after** RECEIPTS has checked binding review contracts. It must not own
 operator confirmation, causal attribution or contract publication. Those remain
 deterministic, auditable application responsibilities.
 
 Until that adapter exists, the one-minute demo uses `receipts/`. The root
-`npm run agent` command proves the inference loop independently, not persistent
-context across reviewer processes.
+`npm run agent` command independently proves autonomous investigation and local
+learning across reviewer processes, not MongoDB-backed contract enforcement.
+
+### Root autonomous harness capability checklist
+
+- [x] Choose Fireworks or OpenRouter as interchangeable inference providers.
+- [x] Let the model plan a bounded multi-step investigation and choose evidence tools.
+- [x] Retrieve contributor context, organizational memories, PR evidence, related files and history through adapters.
+- [x] Return structured findings, a review action, memory proposals and an optional credibility update.
+- [x] Persist repository-scoped credibility and memories across local process restarts.
+- [x] Apply a completed event at most once and reject stale concurrent score updates.
+- [x] Keep current PR evidence separate from durable learned state.
+- [ ] Read RECEIPTS contracts, incidents and receipts through a real MongoDB adapter.
+- [ ] Treat operator-confirmed RECEIPTS contracts as binding constraints in the autonomous loop.
+- [ ] Publish autonomous review results into the RECEIPTS stage UI.
+- [ ] Search a real repository and execute tests in a sandbox.
+
+Local agent learning is advisory. It may change investigation depth, but it cannot
+create, satisfy or bypass a RECEIPTS contract. Binding behavior still comes only
+from operator-confirmed incidents committed through the MongoDB transaction.
 
 ## Data model
 
@@ -211,12 +229,13 @@ must fail closed or surface that degraded state loudly.
 
 | Lane | Provider | Trigger | Authority |
 |---|---|---|---|
-| Standard review | Fireworks | No active contract and no incident similarity at or above `0.75` | Advisory `approve` or `concerns` |
-| Deep review | OpenRouter | Active subsystem contract or high incident similarity | Advisory `approve` or `concerns` after contract checks pass |
+| Standard review | Selected with `REVIEW_PROVIDER` (`fireworks` or `openrouter`) | No active contract and no incident similarity at or above `0.75` | Advisory `approve` or `concerns` |
+| Deep review | The same selected provider with the incident-aware prompt | Active subsystem contract or high incident similarity | Advisory `approve` or `concerns` after contract checks pass |
 | Contract block | Deterministic application logic | Required evidence is absent | Binding block; no LLM call needed |
 
-Both model lanes have loud template fallbacks. The demo's persistence proof does
-not depend on either API being available.
+Both review depths have loud template fallbacks. The demo's persistence proof
+does not depend on either API being available, and provider choice is never used
+as review policy.
 
 ## HTTP and process surfaces
 
@@ -272,7 +291,7 @@ the process-death proof.
 - Operator-confirmed transactional incident publication
 - Subsystem-wide persistent review contracts
 - Disposable reviewer generations, startup recovery and change-stream intake
-- Standard/deep partner-model routing with explicit fallbacks
+- Standard/deep prompts on an interchangeable provider with explicit fallbacks
 - Live operator and stage UIs backed by database change streams
 - Derived scoped standing and proof-debt display
 - Destructive DB-backed mechanics proof harness
@@ -282,10 +301,11 @@ the process-death proof.
 P0:
 
 - Commit and push the complete `receipts/` application with these canonical docs.
-- Keep the root inference harness clearly labeled as a separate, snapshot-backed
+- Keep the root inference harness clearly labeled as a separate, locally persisted
   component until a real RECEIPTS data-source adapter is implemented.
 - Run `npm run verify` against a dedicated Atlas hackathon database.
-- Run `npm run llm-smoke` and confirm both partner calls are visibly labeled.
+- Run `npm run llm-smoke` once with each `REVIEW_PROVIDER` and confirm both
+  providers are visibly labeled.
 - Rehearse kill/restart timing at least three times.
 - Confirm the Atlas Vector Search index is queryable before recording.
 - Correct the historical `satisfiedBy: [452]` seed reference, which currently

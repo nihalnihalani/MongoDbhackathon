@@ -53,7 +53,7 @@ payments PR, regardless of author.
 | Capability | Role in RECEIPTS |
 |---|---|
 | Documents | Store PR receipts, confirmed incidents, review contracts, contributor identities and reviewer generations. |
-| Atlas Vector Search | Retrieve semantically related incidents to choose review depth and give the critic relevant failure history. Similarity is context, never proof of fault. |
+| Atlas Vector Search | Retrieve semantically related incidents to choose review depth and give the selected model relevant failure history. Similarity is context, never proof of fault. |
 | Transactions | Atomically create the incident, mark the PR outcome failed and publish the future review contract. |
 | Change streams | Wake the disposable reviewer for submitted PRs and drive the stage UI from database changes. |
 | Aggregation and `$lookup` | Derive explainable `contributor x subsystem` standing from outcomes and open proof debt. |
@@ -72,17 +72,16 @@ flowchart LR
     API --> DB[(MongoDB Atlas)]
     DB -->|PR change stream| R[Disposable reviewer]
     R -->|active contracts + vector incidents| DB
-    R -->|standard review| F[Fireworks]
-    R -->|history-triggered deep review| OR[OpenRouter]
+    R -->|standard or history-triggered deep review| LLM[Selected provider<br/>Fireworks or OpenRouter]
     R -->|verdict + contract satisfaction| DB
     DB -->|change streams| S[Stage screen]
 ```
 
-Reviews have two lanes:
+Reviews have two depths, both handled by the configured provider:
 
-- **Standard:** Fireworks handles ordinary PRs without relevant incident history.
-- **Deep:** OpenRouter scrutinizes PRs in contract-bearing subsystems or those
-  with a high-similarity incident match.
+- **Standard:** ordinary PRs without relevant incident history receive fast triage.
+- **Deep:** PRs in contract-bearing subsystems or with a high-similarity incident
+  match receive the incident-aware prompt and executed evidence.
 
 An unmet review contract blocks before either model is called. Both model lanes
 have a visibly labeled template fallback so an unavailable partner API cannot
@@ -99,12 +98,14 @@ The repository contains two complementary pieces:
   and stage screens described above.
 - **The root TypeScript package is an autonomous inference harness.** It runs a
   bounded, provider-neutral investigation loop over a `ReviewDataSource`, with
-  Fireworks and OpenRouter adapters plus snapshot fixtures. It does not yet read
-  from RECEIPTS, MongoDB or GitHub and it does not enforce review contracts.
+  Fireworks and OpenRouter adapters plus snapshot fixtures. It persists its own
+  learned credibility and memories across runs in an atomic local JSON state
+  file. It does not yet read from RECEIPTS, MongoDB or GitHub and it does not
+  enforce review contracts.
 
 The intended integration boundary is narrow: RECEIPTS remains authoritative for
 causal confirmation and deterministic contract enforcement, while the root
-harness can later become the richer model-backed critic after those checks pass.
+harness can later become the richer autonomous reviewer after those checks pass.
 See [`docs/agent-harness.md`](docs/agent-harness.md) for its event schema,
 provider configuration and adapter contract.
 
@@ -118,9 +119,10 @@ npm test
 npm run agent -- --event examples/pr-event.json --snapshot examples/review-snapshot.json
 ```
 
-It reads environment variables from the shell and writes its structured result
-to stdout. This snapshot path is useful for testing the agent loop, but it is not
-the persistent-context demo.
+It reads environment variables from the shell, writes its structured result to
+stdout and stores learned context in `.murmur/agent-state.json` by default. This
+proves persistent model learning locally, but it is not the MongoDB-backed
+persistent-context demo.
 
 ## Run locally
 
@@ -137,9 +139,9 @@ npm install
 cp .env.example .env
 ```
 
-Set `MONGODB_URI` and `MONGODB_DB` in `.env`. Add Fireworks and OpenRouter keys
-for live model reviews, or set `REVIEW_LLM=off` for deterministic template
-reviews.
+Set `MONGODB_URI`, `MONGODB_DB`, and `REVIEW_PROVIDER` in `.env`, then add the
+selected provider's API key for live model reviews. Set `REVIEW_LLM=off` for
+deterministic template reviews.
 
 Seed the demo once:
 
@@ -191,7 +193,7 @@ receipts/
     schema.js        # collections, indexes and Atlas Vector Search index
     ops.js           # PR, canary, incident, evidence and standing operations
     reviewer.js      # disposable change-stream reviewer worker
-    llm.js           # Fireworks/OpenRouter review lanes and fallbacks
+    llm.js           # Interchangeable Fireworks/OpenRouter provider and review depths
     server.js        # HTTP API, SSE and UI change streams
     seed.js          # deterministic demo history
     proof.js         # destructive DB-backed mechanics proof harness
