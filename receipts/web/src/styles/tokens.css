@@ -1,0 +1,150 @@
+/* =============================================================================
+   RECEIPTS — Design tokens
+   -----------------------------------------------------------------------------
+   §1 and §5 below are pasted VERBATIM from DESIGN.md (owner: design-director).
+   Do not edit those blocks; they are the authoritative palette and metrics.
+
+   The DERIVED ROLES section at the bottom is the only thing this file adds: it
+   names component-level roles in terms of the design director's inks, using
+   color-mix as §1 requires so every tint tracks the theme.
+   ========================================================================== */
+
+/* ---- DESIGN.md §1 — Color tokens (verbatim) ------------------------------ */
+
+:root {
+  color-scheme: dark;
+
+  /* ---- Ground: warm near-black, like exposed photographic paper ---- */
+  --bg:            #0C0B0A;
+  --surface:       #141310;   /* stream rows, panels */
+  --surface-2:     #1C1A16;   /* raised cards, evidence, memo blocks */
+  --surface-sunk:  #080807;   /* wells, code output, inset logs */
+
+  /* ---- Rules & borders ---- */
+  --line:          #2A2722;   /* hairline separators (decorative only) */
+  --line-strong:   #3D3830;   /* panel edges, card borders (decorative) */
+  --line-control:  #6E655A;   /* REQUIRED for interactive borders — 3.44:1 on --bg */
+
+  /* ---- Ink (text) ---- */
+  --ink:           #EDE6D8;   /* primary — 15.8:1 on --bg, 14.0:1 on --surface-2 */
+  --ink-2:         #A9A092;   /* secondary —  7.6:1 on --bg,  6.7:1 on --surface-2 */
+  --ink-3:         #8A8174;   /* meta: timestamps, ids —  5.1:1 / 4.5:1 */
+
+  /* ---- Signal inks. Same values serve verdicts AND credibility bands. ---- */
+  --ink-red:       #F0553C;   /* BLOCKED   / band: suspect  — 5.7:1 on --bg */
+  --ink-amber:     #E8A93C;   /* COMMENTED / band: watch    — 9.5:1 on --bg */
+  --ink-green:     #3FBE7C;   /* APPROVED  / band: trusted  — 8.3:1 on --bg */
+  --ink-steel:     #69A9E8;   /* INVESTIGATING, live state  — 7.9:1 on --bg */
+  --ink-mimeo:     #B48BE8;   /* escalation, high-similarity — 7.3:1 on --bg */
+
+  /* ---- Utility ---- */
+  --focus:         #F5C542;   /* 12.1:1 on --bg */
+  --shadow-hard:   rgba(0, 0, 0, 0.62);
+  --select-bg:     rgba(245, 197, 66, 0.22);
+  --stamp-fill:    10%;       /* currentColor mix % behind a stamp */
+  --texture-ink:   rgba(237, 230, 216, 0.030);  /* noise + ledger rules */
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  /* ---- Ground: manila desk under a lamp ---- */
+  --bg:            #EDE7D9;
+  --surface:       #F6F1E5;
+  --surface-2:     #FCF9F1;
+  --surface-sunk:  #E2DAC7;
+
+  --line:          #D6CDBA;
+  --line-strong:   #BBB099;
+  --line-control:  #847A69;   /* 3.43:1 on --bg */
+
+  --ink:           #1A1712;   /* 14.5:1 on --bg */
+  --ink-2:         #4A4237;   /*  8.0:1 */
+  --ink-3:         #6E6455;   /*  4.7:1 */
+
+  --ink-red:       #B3301A;   /*  5.1:1 */
+  --ink-amber:     #8A5A0B;   /*  4.8:1 */
+  --ink-green:     #1A6B42;   /*  5.3:1 */
+  --ink-steel:     #1F5E96;   /*  5.5:1 */
+  --ink-mimeo:     #6B3FA8;   /*  5.9:1 */
+
+  --focus:         #8A4B00;   /*  5.5:1 */
+  --shadow-hard:   rgba(58, 48, 32, 0.30);
+  --select-bg:     rgba(138, 75, 0, 0.18);
+  --stamp-fill:    8%;
+  --texture-ink:   rgba(26, 23, 18, 0.038);
+}
+
+/* ---- DESIGN.md §5 — Spacing, radii, rail metrics (verbatim) -------------- */
+
+:root {
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px; --s-5: 24px;
+  --s-6: 32px; --s-7: 48px; --s-8: 64px; --s-9: 96px;
+
+  --r-0: 0;    --r-1: 2px;  --r-2: 3px;  --r-3: 4px;   /* ← the maximum */
+
+  --gutter: var(--s-5);          /* 24px desktop */
+  --rail-w: 340px;
+  --stream-max: 860px;
+  --prose-max: 66ch;
+}
+@media (max-width: 767px) { :root { --gutter: var(--s-4); } }
+
+/* Elevation — hard offset only, never blurred (DESIGN.md §5). */
+:root {
+  --elev-1: 2px 2px 0 var(--shadow-hard);
+  --elev-2: 3px 3px 0 var(--shadow-hard);
+  --elev-3: 5px 5px 0 var(--shadow-hard);
+}
+
+/* =============================================================================
+   DERIVED ROLES — built from the inks above, added by frontend-builder.
+   Every tint uses color-mix per §1's hard rule so it tracks the theme.
+   ========================================================================== */
+
+:root {
+  /* ---- Type families (DESIGN.md §2) ---- */
+  --font-display: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
+  --font-sans: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* ---- Type scale (DESIGN.md §2, px for determinism) ---- */
+  --fs-display-xl: 64px;
+  --fs-display-l: 44px;
+  --fs-display-m: 30px;
+  --fs-title: 21px;
+  --fs-prose: 16.5px;
+  --fs-body: 15px;
+  --fs-body-sm: 13.5px;
+  --fs-label: 11px;
+  --fs-mono: 14px;
+  --fs-mono-sm: 12px;
+  --fs-numeral-xl: 72px;
+  --fs-numeral: 20px;
+
+  --lh-prose: 1.65;
+  --lh-body: 1.55;
+  --tracking-label: 0.16em;
+  --tracking-tight: -0.01em;
+
+  /* Outermost page width. The stream centers --stream-max inside it. */
+  --content-max: 1440px;
+
+  /* ---- Field tints (DESIGN.md §4) ---- */
+  --tint-red: color-mix(in oklab, var(--ink-red) 12%, transparent);
+  --tint-amber: color-mix(in oklab, var(--ink-amber) 12%, transparent);
+  --tint-green: color-mix(in oklab, var(--ink-green) 12%, transparent);
+  --tint-steel: color-mix(in oklab, var(--ink-steel) 12%, transparent);
+  --tint-mimeo: color-mix(in oklab, var(--ink-mimeo) 12%, transparent);
+
+  /* Translucent masthead ground — the only place a surface is see-through. */
+  --bg-overlay: color-mix(in oklab, var(--bg) 88%, transparent);
+
+  /* ---- Motion (DESIGN.md §7) ---- */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-stamp: cubic-bezier(0.2, 1.5, 0.3, 1);
+  --dur-fast: 120ms;
+  --dur-row: 220ms;
+  --dur-rail: 260ms;
+  --dur-stamp: 320ms;
+}
