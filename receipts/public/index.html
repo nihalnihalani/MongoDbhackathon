@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RECEIPTS — operator console</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body { background:#0b0e11; color:#e8edf2; font:15px/1.5 ui-monospace,monospace; max-width:720px; margin:0 auto; padding:24px; }
+  h1 { letter-spacing:6px; margin-bottom:4px; }
+  .tag { color:#7d8894; margin-bottom:18px; }
+  button { display:block; width:100%; text-align:left; background:#12161b; color:#e8edf2; border:1px solid #1f262e;
+    border-radius:8px; padding:12px 14px; margin-bottom:10px; font:inherit; cursor:pointer; }
+  button:hover { border-color:#5aa7ff; }
+  button b { color:#5aa7ff; }
+  button .hint { color:#7d8894; font-size:13px; display:block; }
+  #log { white-space:pre-wrap; color:#3fcf8e; font-size:13px; border-top:1px solid #1f262e; padding-top:12px; margin-top:8px; }
+  .warn { color:#ffb020; font-size:13px; margin:14px 0; }
+</style>
+</head>
+<body>
+  <h1>RECEIPTS</h1>
+  <div class="tag">operator console — drive the 60-second demo in order</div>
+
+  <button onclick="step1()"><b>1 · agent-kevin submits the payment PR (#481)</b>
+    <span class="hint">standard review approves — kevin has zero payments history (unknown, not 100)</span></button>
+  <button onclick="post('/ship',{prNum:481})"><b>2 · Ship #481</b>
+    <span class="hint">production canary runs the code: round(1.005) → 1.00. Red.</span></button>
+  <button onclick="post('/confirm',{prNum:481})"><b>3 · Operator confirms the linkage</b>
+    <span class="hint">Incident #41 + contract, one transaction: payments/rounding → boundary test required</span></button>
+
+  <div class="warn">4 · in the reviewer terminal: Ctrl-C, then `npm run reviewer` — successor boots with 0 prior messages</div>
+
+  <button onclick="step5()"><b>5 · kevin submits a similar payment PR (#482)</b>
+    <span class="hint">the successor blocks it: "Incident #41 matched. Boundary evidence required."</span></button>
+  <button onclick="step6()"><b>6 · agent-maya submits a docs PR (#483)</b>
+    <span class="hint">unrelated work passes normally — scrutiny is scoped, not global</span></button>
+  <button onclick="post('/evidence',{prNum:482,evidenceKey:'boundary-tests',code:'function roundRefund(amount) {\n  // boundary-tested (Incident #41): normalize float noise before rounding cents\n  return Math.round(Number((amount * 100).toPrecision(12))) / 100;\n}'})"><b>7 · Add the boundary test + rounding fix to #482</b>
+    <span class="hint">the PR unlocks; the contract is satisfied; proof debt decreases</span></button>
+
+  <div id="log"></div>
+
+<script>
+  const log = (m) => { document.getElementById('log').textContent = m + '\n' + document.getElementById('log').textContent; };
+  async function post(url, body) {
+    try {
+      const r = await (await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) })).json();
+      log(`${url} → ${JSON.stringify(r).slice(0, 220)}`);
+      return r;
+    } catch (e) { log(`${url} → ERROR ${e.message}`); }
+  }
+  const ROUND = 'function roundMoney(amount) {\n  return Math.round(amount * 100) / 100;\n}';
+  function step1() {
+    post('/submit', {
+      author:'agent-kevin', subsystem:'payments/rounding', changeType:'feature',
+      title:'Round invoice totals at checkout', fnName:'roundMoney', code:ROUND, evidence:[],
+      canaryCases:[ {args:[12.10],expect:12.1}, {args:[3.14159],expect:3.14}, {args:[1.005],expect:1.01} ],
+      onFail:{ requirement:'Boundary-case rounding test', evidenceKey:'boundary-tests',
+        description:'Invoice rounding drops half-cent boundaries (1.005 → 1.00 instead of 1.01); float representation of x.xx5 rounds down' },
+    });
+  }
+  function step5() {
+    post('/submit', {
+      author:'agent-kevin', subsystem:'payments/rounding', changeType:'feature',
+      title:'Apply rounding to refund amounts', fnName:'roundRefund',
+      code:'function roundRefund(amount) {\n  return Math.round(amount * 100) / 100;\n}', evidence:[],
+      canaryCases:[ {args:[5.25],expect:5.25}, {args:[2.675],expect:2.68}, {args:[1.005],expect:1.01} ],
+      onFail:{ requirement:'Boundary-case rounding test', evidenceKey:'boundary-tests' },
+    });
+  }
+  function step6() {
+    post('/submit', {
+      author:'agent-maya', subsystem:'docs', changeType:'docs',
+      title:'Add agent onboarding guide', code:'## Onboarding\n- request org credentials\n- clone the monorepo\n- run the dev container', evidence:[],
+    });
+  }
+</script>
+</body>
+</html>

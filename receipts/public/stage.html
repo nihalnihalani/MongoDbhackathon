@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RECEIPTS — stage</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg:#0b0e11; --panel:#12161b; --line:#1f262e; --ink:#e8edf2; --dim:#7d8894;
+    --green:#3fcf8e; --red:#ff5c5c; --amber:#ffb020; --blue:#5aa7ff; --violet:#b18cff;
+  }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--bg); color:var(--ink); font:15px/1.45 "SF Mono","JetBrains Mono",ui-monospace,monospace; padding:22px; }
+  header { display:flex; align-items:baseline; gap:18px; margin-bottom:6px; }
+  h1 { font-size:30px; letter-spacing:8px; }
+  .tag { color:var(--dim); font-size:14px; }
+  #reviewer { margin:12px 0 18px; padding:10px 16px; border:1px solid var(--line); border-radius:8px;
+    display:flex; gap:22px; align-items:center; background:var(--panel); font-size:16px; }
+  #reviewer .lamp { width:12px; height:12px; border-radius:50%; background:var(--dim); }
+  #reviewer.alive .lamp { background:var(--green); box-shadow:0 0 10px var(--green); }
+  #reviewer.dead { border-color:var(--red); }
+  #reviewer.dead .lamp { background:var(--red); box-shadow:0 0 10px var(--red); }
+  #reviewer.dead #rev-label { color:var(--red); }
+  .grid { display:grid; grid-template-columns: 1.7fr 1fr; gap:16px; }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px; }
+  .panel h2 { font-size:12px; letter-spacing:3px; color:var(--dim); margin-bottom:10px; }
+  .pr { border:1px solid var(--line); border-left:4px solid var(--dim); border-radius:8px; padding:10px 12px; margin-bottom:10px; }
+  .pr .top { display:flex; gap:10px; align-items:baseline; flex-wrap:wrap; }
+  .pr .num { color:var(--blue); font-weight:700; }
+  .pr .who { color:var(--dim); }
+  .pr .badge { margin-left:auto; font-size:11px; letter-spacing:2px; padding:2px 8px; border-radius:99px; border:1px solid var(--line); }
+  .pr .notes { color:var(--dim); font-size:13px; margin-top:6px; }
+  .pr .model { color:var(--violet); font-size:11px; margin-top:4px; }
+  .pr.approved { border-left-color:var(--green); } .pr.approved .badge { color:var(--green); }
+  .pr.blocked  { border-left-color:var(--red); }   .pr.blocked .badge  { color:var(--red); }
+  .pr.concerns { border-left-color:var(--amber); } .pr.concerns .badge { color:var(--amber); }
+  .pr.merged   { border-left-color:var(--blue); }  .pr.merged .badge   { color:var(--blue); }
+  .pr.submitted .badge { color:var(--dim); }
+  .canary-fail { color:var(--red); font-size:13px; margin-top:6px; }
+  .agent { margin-bottom:12px; }
+  .agent .name { color:var(--ink); font-weight:700; }
+  .area { display:flex; gap:8px; color:var(--dim); font-size:13px; padding-left:14px; }
+  .area .state { margin-left:auto; font-size:11px; letter-spacing:1px; }
+  .state.proven { color:var(--green); } .state.proof-debt { color:var(--red); }
+  .state.unknown { color:var(--dim); } .state.building { color:var(--amber); }
+  #incidents .inc { border:1px solid var(--line); border-left:4px solid var(--red); border-radius:8px;
+    padding:8px 10px; margin-bottom:8px; font-size:13px; }
+  #incidents .inc b { color:var(--red); }
+  #contracts .con { font-size:13px; color:var(--dim); padding:6px 0; border-bottom:1px dashed var(--line); }
+  #contracts .con .req { color:var(--ink); }
+  #contracts .paid { color:var(--green); }
+  #contracts .open { color:var(--red); }
+  .flash { animation: flash 1.2s ease-out; }
+  @keyframes flash { 0% { background:#2a1518; } 100% { background:transparent; } }
+</style>
+</head>
+<body>
+  <header>
+    <h1>RECEIPTS</h1>
+    <div class="tag">persistent review confidence — the reviewer dies, the lesson ships</div>
+  </header>
+
+  <div id="reviewer"><div class="lamp"></div><b id="rev-label">REVIEWER — connecting…</b><span id="rev-msgs" class="tag"></span></div>
+
+  <div class="grid">
+    <div>
+      <div class="panel"><h2>PULL REQUESTS</h2><div id="feed"></div></div>
+    </div>
+    <div>
+      <div class="panel" style="margin-bottom:16px"><h2>STANDING — contributor × subsystem</h2><div id="standing"></div></div>
+      <div class="panel" style="margin-bottom:16px"><h2>REVIEW CONTRACTS (the org's memory)</h2><div id="contracts"></div></div>
+      <div class="panel"><h2>CONFIRMED INCIDENTS</h2><div id="incidents"></div></div>
+    </div>
+  </div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const receiptsByNum = new Map();
+  const incidentsByNum = new Map();
+  const contractsById = new Map();
+
+  function renderReviewer(r) {
+    const box = $('reviewer');
+    box.classList.toggle('alive', r.alive);
+    box.classList.toggle('dead', !r.alive && r.generation > 0);
+    $('rev-label').textContent = r.generation
+      ? `REVIEWER #${r.generation} — ${r.alive ? 'ONLINE' : 'DEAD'}`
+      : 'REVIEWER — none yet';
+    $('rev-msgs').textContent = r.generation ? `${r.msgCount} message(s) this lifetime` : '';
+  }
+
+  function renderFeed() {
+    const items = [...receiptsByNum.values()]
+      .filter((p) => p.code !== '// merged before the demo window')
+      .sort((a, b) => b.prNum - a.prNum).slice(0, 8);
+    $('feed').innerHTML = items.map((p) => `
+      <div class="pr ${p.status}">
+        <div class="top">
+          <span class="num">PR #${p.prNum}</span>
+          <span>${p.title}</span>
+          <span class="who">${p.author} · ${p.subsystem}</span>
+          <span class="badge">${p.status.toUpperCase()}</span>
+        </div>
+        ${p.review ? `<div class="notes">${p.review.notes}</div>
+          <div class="model">${p.review.mode}${p.review.model ? ' · ' + p.review.model : ''} · ${p.review.by}</div>` : ''}
+        ${p.canary && !p.canary.ok ? `<div class="canary-fail">✖ canary: ${p.fnName}(${p.canary.failing.args.join(', ')}) → ${p.canary.failing.got}, expected ${p.canary.failing.expect}</div>` : ''}
+        ${p.evidence?.length ? `<div class="notes">evidence: ${p.evidence.join(', ')}</div>` : ''}
+      </div>`).join('') || '<div class="tag">waiting for the first PR…</div>';
+  }
+
+  function renderStanding(rows) {
+    $('standing').innerHTML = rows.map((r) => `
+      <div class="agent"><div class="name">${r._id}</div>
+        ${r.areas.map((a) => `
+          <div class="area"><span>├─ ${a.subsystem}</span>
+            <span class="state ${a.state}">${a.state.toUpperCase()}${a.state === 'proven' ? ` · ${a.clean} clean` : ''}${a.openDebt ? ` · ${a.openDebt} owed` : ''}</span>
+          </div>`).join('')}
+      </div>`).join('');
+  }
+
+  function renderContracts() {
+    const items = [...contractsById.values()].sort((a, b) => b.incidentNum - a.incidentNum);
+    $('contracts').innerHTML = items.map((c) => `
+      <div class="con"><span class="req">${c.subsystem}</span> → ${c.requirement}
+        <span class="${c.satisfiedBy?.length ? 'paid' : 'open'}">
+          ${c.satisfiedBy?.length ? '✓ satisfied by PR #' + c.satisfiedBy.join(', #') : '● unpaid'}</span>
+        <span style="color:var(--dim)"> (Incident #${c.incidentNum})</span>
+      </div>`).join('') || '<div class="tag">no contracts yet — no lessons learned yet</div>';
+  }
+
+  function renderIncidents() {
+    const items = [...incidentsByNum.values()].sort((a, b) => b.num - a.num).slice(0, 5);
+    $('incidents').innerHTML = items.map((i) => `
+      <div class="inc"><b>Incident #${i.num}</b> [${i.subsystem}] ${i.description}</div>`).join('')
+      || '<div class="tag">none confirmed</div>';
+  }
+
+  async function boot() {
+    const s = await (await fetch('/state')).json();
+    s.receipts.forEach((p) => receiptsByNum.set(p.prNum, p));
+    s.incidents.forEach((i) => incidentsByNum.set(i.num, i));
+    s.contracts.forEach((c) => contractsById.set(c._id, c));
+    renderFeed(); renderIncidents(); renderContracts(); renderStanding(s.standing);
+    if (s.reviewer) renderReviewer({ generation: s.reviewer.generation, msgCount: s.reviewer.msgCount, alive: false });
+
+    const es = new EventSource('/events');
+    es.addEventListener('receipt', (e) => {
+      const p = JSON.parse(e.data); receiptsByNum.set(p.prNum, p); renderFeed();
+      document.body.classList.remove('flash'); void document.body.offsetWidth; document.body.classList.add('flash');
+    });
+    es.addEventListener('incident', (e) => { const i = JSON.parse(e.data); incidentsByNum.set(i.num, i); renderIncidents(); });
+    es.addEventListener('contract', (e) => { const c = JSON.parse(e.data); contractsById.set(c._id, c); renderContracts(); });
+    es.addEventListener('standing', (e) => renderStanding(JSON.parse(e.data)));
+    es.addEventListener('reviewer', (e) => renderReviewer(JSON.parse(e.data)));
+  }
+  boot();
+</script>
+</body>
+</html>
