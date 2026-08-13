@@ -28,12 +28,10 @@ function useElapsed(since: number | undefined): string {
 
 function CaseHeader({
   current,
-  events,
   phase,
   onReplay,
 }: {
   current: LiveCase | null
-  events: number
   phase: ArcPhase
   onReplay: () => void
 }) {
@@ -54,9 +52,6 @@ function CaseHeader({
         </span>
         <span className="num" style={{ fontSize: 'var(--fs-mono-sm)', color: 'var(--ink-3)' }}>
           T+{elapsed}
-        </span>
-        <span className="num" style={{ fontSize: 'var(--fs-mono-sm)', color: 'var(--ink-3)' }}>
-          {String(events).padStart(3, '0')} events logged
         </span>
       </div>
 
@@ -140,7 +135,7 @@ function useRailState(): [boolean, () => void] {
 }
 
 export function Courtroom() {
-  const { entries, current, count, phase, replay } = useAgentStream()
+  const { entries, current, phase, replay } = useAgentStream()
   const [railOpen, toggleRail] = useRailState()
 
   return (
@@ -155,7 +150,7 @@ export function Courtroom() {
       >
         <div className="courtroom-grid" data-rail={railOpen ? 'open' : 'closed'}>
           <section className="panel min-w-0 overflow-hidden">
-            <CaseHeader current={current} events={count} phase={phase} onReplay={replay} />
+            <CaseHeader current={current} phase={phase} onReplay={replay} />
 
             <div className="flex items-center gap-3 px-4 py-2.5 sm:px-6">
               <h2 className="label" style={{ color: 'var(--ink-2)' }}>

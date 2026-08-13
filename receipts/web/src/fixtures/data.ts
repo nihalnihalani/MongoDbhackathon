@@ -460,6 +460,26 @@ export const reviews: ReviewSummary[] = [
     scrutiny: 'normal',
     startedAt: ago(58),
   },
+  {
+    id: 'rev-452',
+    prId: 'pr-452',
+    title: 'Batch org membership lookups behind the authz filter',
+    author: 'Liam Ortega',
+    authorId: 'liam',
+    status: 'approved',
+    scrutiny: 'normal',
+    startedAt: ago(33),
+  },
+  {
+    id: 'rev-402',
+    prId: 'pr-402',
+    title: 'Session store migration',
+    author: 'Liam Ortega',
+    authorId: 'liam',
+    status: 'approved',
+    scrutiny: 'normal',
+    startedAt: ago(54),
+  },
 ]
 
 /** Summaries are spread into their details by id — never by array position. */
@@ -890,6 +910,114 @@ const detailById: Record<string, RawReviewDetail> = {
     memoryWritten:
       'PR #391: flagged the conditional at session.ts:112, accepted the author\'s assurance, did not verify. Revisit if anything regresses here.',
     credibilityDelta: -18,
+  },
+  /* ---- The two Liam cases his dossier tells stories about. A judge who reads
+     "I blocked on a suspected N+1 and he showed me the query plan" will click
+     through to see whether that actually happened (DESIGN.md §9.2). --------- */
+  'rev-452': {
+    ...summary('rev-452'),
+    belief:
+      'Liam has credibility 113 in auth. This batches membership lookups behind the authorization filter. Batching a query that runs per-row inside an authz check is exactly where an N+1 hides, and a batched lookup that skips the filter for cached rows is worse than the N+1 — so I am reading the filter placement rather than the batching.',
+    actions: [
+      {
+        kind: 'fetch_diff',
+        label: 'fetch_diff',
+        output: '+88 −61 across 4 files · src/orgs/membership.ts, +3',
+        at: ago(33),
+      },
+      {
+        kind: 'analyze_diff',
+        label: 'analyze_diff',
+        output:
+          'Lookup moved from inside the row loop to a single batched call. Suspected N+1 remaining on the authz filter path.',
+        at: ago(33),
+      },
+      {
+        kind: 'compose_verdict',
+        label: 'compose_verdict',
+        output: 'blocked · suspected N+1 on the filter path',
+        at: ago(33),
+      },
+      {
+        kind: 'read_author_response',
+        label: 'read_author_response',
+        output:
+          'Author supplied the query plan: one indexed batched lookup, filter applied in the same statement. No N+1. My reading was wrong.',
+        at: ago(33),
+      },
+      {
+        kind: 'revise_verdict',
+        label: 'revise_verdict',
+        output: 'blocked → approved. Reversal recorded against my own record, not his.',
+        at: ago(33),
+      },
+    ],
+    evidence: [
+      {
+        memoryId: 'mem-l-03',
+        kind: 'self',
+        text: 'His PR descriptions have matched the diff in 61 of 61 reviews. I use the description as a prior for this author only.',
+        similarity: 0.72,
+        sourceId: 'liam',
+      },
+    ],
+    verdict: {
+      decision: 'approved',
+      reasoning:
+        'I blocked this and I was wrong. The query plan shows a single indexed lookup with the authorization filter applied in the same statement — there is no N+1, and there never was one. I am recording the reversal here rather than quietly editing the verdict, because a credibility system that only writes down other people\'s mistakes is not keeping receipts, it is keeping score. Liam gains 5 for producing evidence instead of arguing.',
+      at: ago(33),
+    },
+    postedReview: {
+      url: 'https://github.com/acme/platform/pull/452',
+      body: `Retracting my block. You are right and I misread the filter placement — the plan shows one indexed lookup with the authz predicate applied in the same statement.
+
+Approved. Noting in my own record that the block was mine to get wrong, not yours to defend.`,
+    },
+    memoryWritten:
+      'PR #452: I blocked on a suspected N+1 and Liam produced the query plan showing a single batched lookup. I was wrong. His technical pushback is evidence, not noise — weight it accordingly.',
+    credibilityDelta: 5,
+  },
+  'rev-402': {
+    ...summary('rev-402'),
+    belief:
+      'Liam has credibility 106 in auth. A session store migration touches the surface where Kevin has cost me the most, so I am reading it against that failure mode rather than against this author — vigilance is about the subsystem, trust is about the person, and those are different things.',
+    actions: [
+      {
+        kind: 'fetch_diff',
+        label: 'fetch_diff',
+        output: '+140 −96 across 5 files · src/auth/session-store.ts, +4',
+        at: ago(54),
+      },
+      {
+        kind: 'read_author_response',
+        label: 'read_author_response',
+        output:
+          'Author flagged, unprompted: two concurrent writes could both regenerate the session id, second silently winning. Fixed in the same PR before review.',
+        at: ago(54),
+      },
+      {
+        kind: 'verify_fix',
+        label: 'verify_fix',
+        output: 'Regeneration now guarded by a conditional update on the prior id. Race closed.',
+        at: ago(54),
+      },
+    ],
+    evidence: [],
+    verdict: {
+      decision: 'approved',
+      reasoning:
+        'He found a race condition in his own migration and closed it before I reached that file. I had already read this diff twice without seeing it. The credit here is not for writing correct code; it is for finding the defect that I missed, in the subsystem where my misses have been most expensive.',
+      at: ago(54),
+    },
+    postedReview: {
+      url: 'https://github.com/acme/platform/pull/402',
+      body: `Approved. The conditional update on the prior id closes the regeneration race.
+
+For the record: I read this diff twice before you flagged that, and I did not see it.`,
+    },
+    memoryWritten:
+      'PR #402: Liam caught a race condition in his own session-store migration during review — two requests could both regenerate the session id — and fixed it before I reached that file. He finds his own bugs.',
+    credibilityDelta: 3,
   },
 }
 

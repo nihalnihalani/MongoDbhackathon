@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, type CSSProperties } from 'react'
+import { useContext, useEffect, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import type { LogEntry, ReviewStatus, StreamEventType } from '../lib/types'
 import { clockTime, prNumber, signed, toStatus } from '../lib/format'
@@ -6,6 +6,7 @@ import { useTypedText } from '../hooks/useTypedText'
 import { useCountUp } from '../hooks/useCountUp'
 import { useReducedMotion } from '../hooks/useReducedMotion'
 import { pulseCause, revealCause, setLinked } from '../lib/causality'
+import { MemoryIndex } from '../lib/memoryIndex'
 import { Stamp } from './Stamp'
 import { SimilarityMeter } from './SimilarityMeter'
 import { CredibilityChip } from './CredibilityChip'
@@ -28,13 +29,6 @@ const TAG: Record<StreamEventType, { glyph: string; ink: string; label: string }
   // reads as the app having hung.
   hesitation: { glyph: '⋯', ink: 'var(--ink-3)', label: '' },
 }
-
-/**
- * Short quotes for memories the stream has already shown, so a causal link can
- * say what it points at instead of printing an opaque id. Populated by the log
- * from the retrieval events themselves, so it works against a live backend too.
- */
-export const MemoryIndex = createContext<Record<string, string>>({})
 
 function verdictInk(status: ReviewStatus): string {
   switch (status) {
@@ -255,28 +249,13 @@ function EventBody({ entry, live }: LogEventProps) {
       return (
         <div className="flex flex-col gap-3">
           <ul className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-            {event.memories.map((memory, i) => (
-              <li
-                key={memory.id}
-                data-mem={memory.id}
-                className="burst-item min-w-0 flex-1 sm:min-w-[15rem]"
-                style={{ ['--burst-i' as string]: i }}
-                onMouseEnter={() => setLinked([memory.id], true)}
-                onMouseLeave={() => setLinked([memory.id], false)}
-              >
-                {/* Every evidence card lands somewhere real — a judge will click one. */}
-                <Link
-                  to={reviewPathForSource(memory.sourceId)}
-                  className="lift block h-full border p-3"
-                  style={{
-                    background: 'var(--surface-2)',
-                    borderColor: 'var(--line-strong)',
-                    borderLeft:
-                      memory.kind === 'self' ? '3px solid var(--ink-mimeo)' : undefined,
-                    borderRadius: 'var(--r-1)',
-                    boxShadow: 'var(--elev-1)',
-                  }}
-                >
+            {event.memories.map((memory, i) => {
+              // A card only becomes a link when there is a real record behind
+              // it. Navigating a judge into a 404 costs more than the click is
+              // worth (DESIGN.md §8.4).
+              const href = reviewPathForSource(memory.sourceId)
+              const body = (
+                <>
                   <SimilarityMeter
                     value={memory.similarity}
                     kind={memory.kind}
@@ -292,9 +271,38 @@ function EventBody({ entry, live }: LogEventProps) {
                   >
                     {memory.text}
                   </p>
-                </Link>
-              </li>
-            ))}
+                </>
+              )
+              const style = {
+                background: 'var(--surface-2)',
+                borderColor: 'var(--line-strong)',
+                borderLeft:
+                  memory.kind === 'self' ? '3px solid var(--ink-mimeo)' : undefined,
+                borderRadius: 'var(--r-1)',
+                boxShadow: 'var(--elev-1)',
+              }
+
+              return (
+                <li
+                  key={memory.id}
+                  data-mem={memory.id}
+                  className="burst-item min-w-0 flex-1 sm:min-w-[15rem]"
+                  style={{ ['--burst-i' as string]: i }}
+                  onMouseEnter={() => setLinked([memory.id], true)}
+                  onMouseLeave={() => setLinked([memory.id], false)}
+                >
+                  {href ? (
+                    <Link to={href} className="lift block h-full border p-3" style={style}>
+                      {body}
+                    </Link>
+                  ) : (
+                    <div className="block h-full border p-3" style={style}>
+                      {body}
+                    </div>
+                  )}
+                </li>
+              )
+            })}
           </ul>
 
           {event.contributorId && (

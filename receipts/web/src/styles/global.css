@@ -1023,6 +1023,35 @@
 
   /* The judgment is the only event that breaks the gutter and spans the full
      stream column (DESIGN.md §7.5). */
+  /* The Case File title block. The stamp overlaps the header's bottom rule so
+     it reads as applied to the page rather than laid out in a box. */
+  .case-title-row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-4);
+    align-items: flex-start;
+  }
+
+  .case-stamp {
+    position: relative;
+    z-index: 2;
+  }
+
+  @media (min-width: 768px) {
+    .case-title-row {
+      flex-direction: row;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--s-6);
+    }
+    .case-stamp {
+      flex-shrink: 0;
+      /* Break the header rule by ~14px. */
+      margin-bottom: -46px;
+      margin-top: var(--s-1);
+    }
+  }
+
   .judgment-full {
     padding: var(--s-5) var(--s-5) var(--s-6);
     border-top: 1px solid var(--line-strong);

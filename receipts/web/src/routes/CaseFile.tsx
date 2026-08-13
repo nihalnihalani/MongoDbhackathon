@@ -172,9 +172,11 @@ function CaseHeader({
   comparing?: boolean
   onCompare?: () => void
 }) {
+  const stamped = review.status !== 'investigating' ? review.status : null
+
   return (
     <header
-      className="rise flex flex-col gap-5 border-b px-4 pt-8 pb-6 sm:px-6"
+      className="rise relative flex flex-col gap-5 border-b px-4 pt-8 pb-6 sm:px-6"
       style={{ borderColor: 'var(--line)' }}
     >
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -185,15 +187,33 @@ function CaseHeader({
         <span className="label">opened {absoluteDate(review.startedAt)}</span>
       </div>
 
-      <h1
-        className="display flex flex-wrap items-baseline gap-x-3"
-        style={{ fontSize: 'clamp(1.75rem, 5vw, var(--fs-display-l))' }}
-      >
-        <span className="num" style={{ color: 'var(--ink-amber)', fontSize: '0.7em' }}>
-          {prNumber(review.prId)}
-        </span>
-        <span style={{ color: 'var(--ink)' }}>{review.title}</span>
-      </h1>
+      {/*
+        DESIGN.md §3 placement: the stamp is applied to the PR TITLE BLOCK and
+        overlaps the header's bottom rule, so it reads as struck onto the page
+        rather than laid out in a box. It is never placed over or beside the
+        author's name — the agent judges code, not people, and the visual
+        grammar has to say so. Author identity lives on its own line below, in
+        plain text.
+      */}
+      <div className="case-title-row">
+        <h1
+          className="display flex flex-wrap items-baseline gap-x-3"
+          style={{ fontSize: 'clamp(1.75rem, 5vw, var(--fs-display-l))' }}
+        >
+          <span className="num" style={{ color: 'var(--ink-amber)', fontSize: '0.7em' }}>
+            {prNumber(review.prId)}
+          </span>
+          <span style={{ color: 'var(--ink)' }}>{review.title}</span>
+        </h1>
+
+        {stamped ? (
+          <div className="case-stamp">
+            <Stamp status={stamped} press />
+          </div>
+        ) : (
+          <StatusText status={review.status} />
+        )}
+      </div>
 
       <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
         <span style={{ fontSize: 'var(--fs-body-sm)', color: 'var(--ink-2)' }}>
@@ -207,9 +227,6 @@ function CaseHeader({
           </Link>
         </span>
         <ScrutinyMeter level={review.scrutiny} />
-        {/* The one stamp on this page belongs to the verdict. Status here is
-            plain text (DESIGN.md §3, v2 amendment 7). */}
-        <StatusText status={review.status} className="ml-auto" />
       </div>
 
       {review.controlOf && onCompare && (
@@ -251,8 +268,13 @@ function Outcome({ review }: { review: ReviewDetail }) {
 
   return (
     <div className="flex flex-col gap-6">
+      {/* No stamp here. The page's one stamp is struck on the PR title above —
+          a second one would halve the force of both (DESIGN.md §3). */}
       <div className="flex flex-wrap items-start gap-x-8 gap-y-5">
-        <Stamp status={toVerdict(verdict.decision)} press />
+        <div className="flex flex-col">
+          <span className="label">Verdict</span>
+          <StatusText status={toVerdict(verdict.decision)} className="mt-1" />
+        </div>
         {credibilityDelta !== null && (
           <div className="flex flex-col">
             <span className="label">Credibility applied</span>

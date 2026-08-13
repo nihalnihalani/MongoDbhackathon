@@ -10,7 +10,7 @@
  * PR it was attributed to, which is where its evidence actually lives.
  */
 
-import { incidents } from '../fixtures/data'
+import { caseFileFor, incidents } from '../fixtures/data'
 
 /** "pr-481" → "rev-481". PRs and reviews are 1:1 in this system. */
 export function reviewIdForPr(prId: string): string {
@@ -18,17 +18,28 @@ export function reviewIdForPr(prId: string): string {
 }
 
 /**
- * A memory's `sourceId` → the route that shows the underlying record.
- * Falls back to the contributor dossier for person-scoped memories (standing
- * rules the agent wrote about someone rather than about a change).
+ * A memory's `sourceId` → the route that shows the underlying record, or `null`
+ * when no record is on file.
+ *
+ * Returning null rather than a hopeful URL is the whole point: not every PR the
+ * agent remembers has a full case file, and a card that navigates to a 404 does
+ * more damage than a card that is plainly not a link. The agent's credibility
+ * with the reader rests on its records being real.
  */
-export function reviewPathForSource(sourceId: string): string {
-  if (sourceId.startsWith('pr-')) return `/review/${reviewIdForPr(sourceId)}`
+export function reviewPathForSource(sourceId: string): string | null {
+  if (sourceId.startsWith('pr-')) {
+    const caseFile = caseFileFor(sourceId)
+    return caseFile ? `/review/${caseFile}` : null
+  }
 
   if (sourceId.startsWith('inc-')) {
     const incident = incidents.find((i) => i.id === sourceId)
-    if (incident?.attributedPrId) return `/review/${reviewIdForPr(incident.attributedPrId)}`
+    if (incident?.attributedPrId) {
+      const caseFile = caseFileFor(incident.attributedPrId)
+      if (caseFile) return `/review/${caseFile}`
+    }
     if (incident?.attributedAuthorId) return `/contributor/${incident.attributedAuthorId}`
+    return null
   }
 
   // Person-scoped: "kevin", "liam" — the standing rules live on the dossier.

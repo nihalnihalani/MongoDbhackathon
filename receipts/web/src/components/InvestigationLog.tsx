@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { LogEntry } from '../lib/types'
 import { useReducedMotion } from '../hooks/useReducedMotion'
 import { skipAllTyping } from '../hooks/useTypedText'
-import { LogEvent, MemoryIndex } from './LogEvent'
+import { LogEvent } from './LogEvent'
+import { MemoryIndex } from '../lib/memoryIndex'
 
 interface LogProps {
   entries: LogEntry[]

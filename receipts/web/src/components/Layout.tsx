@@ -6,7 +6,7 @@ function Wordmark() {
   return (
     <Link
       to="/"
-      className="flex items-baseline gap-2.5"
+      className="flex min-w-0 items-baseline gap-2.5"
       aria-label="RECEIPTS — go to the courtroom"
     >
       <span
@@ -63,8 +63,12 @@ export function Layout() {
 
           <Wordmark />
 
-          <div className="ml-auto flex shrink-0 items-center gap-2">
-            <SourceBadge />
+          <div className="ml-auto flex min-w-0 items-center gap-2">
+            {/* The recording label is metadata; below 480px the wordmark and the
+                theme control earn the space instead. */}
+            <span className="hidden truncate sm:inline">
+              <SourceBadge />
+            </span>
             <ThemeToggle />
           </div>
         </div>
