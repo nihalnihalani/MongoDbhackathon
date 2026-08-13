@@ -75,7 +75,7 @@ async function main() {
   await contracts().insertOne({
     subsystem: 'frontend/ui', requirement: 'Output-escaping audit',
     evidenceKey: 'escape-audit', incidentNum: 39, authorAtFault: 'agent-maya',
-    active: true, satisfiedBy: [452], createdAt: new Date(Date.now() - 2 * 86400000),
+    active: true, satisfiedBy: [419], createdAt: new Date(Date.now() - 2 * 86400000),
   });
 
   await setSeq('pr', 480);        // live demo PR becomes #481
