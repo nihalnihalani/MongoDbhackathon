@@ -9,9 +9,11 @@ import { client, db } from './db.js';
 import { initEmbedder } from './embed.js';
 import {
   setupSchema, waitForIndex, receipts, incidents, contracts, reviewerStatus,
-  githubDeliveries, githubPublications,
+  githubDeliveries, githubPublications, leaderboardProfiles,
 } from './schema.js';
-import { submitPR, shipPR, confirmIncident, addEvidence, standing } from './ops.js';
+import {
+  submitPR, shipPR, confirmIncident, addEvidence, contributorLeaderboard, standing,
+} from './ops.js';
 import {
   processGitHubDelivery,
   processPendingGitHubDeliveries,
@@ -123,13 +125,14 @@ app.get('/api/live', api(async () => {
       { 'github.repository': { $exists: true } },
       { sort: { ts: -1 }, projection: { canaryCases: 0 } },
     );
-  const [publication, contract, incident, reviewer] = await Promise.all([
+  const [publication, contract, incident, reviewer, leaderboard] = await Promise.all([
     receipt
       ? githubPublications().findOne({ receiptPrNum: receipt.prNum }, { sort: { createdAt: -1 } })
       : null,
     contracts().findOne({ demoKey: 'named-enum-msvc' }),
     incidents().findOne({ num: 132850 }, { projection: { embedding: 0 } }),
     reviewerStatus().findOne({ _id: 'reviewer' }),
+    contributorLeaderboard(),
   ]);
   const reviewerAlive = Boolean(
     reviewer?.alive && Date.now() - new Date(reviewer.lastSeen).getTime() < 6000,
@@ -142,6 +145,7 @@ app.get('/api/live', api(async () => {
     contract,
     incident,
     reviewer: reviewer ? { ...reviewer, alive: reviewerAlive } : null,
+    leaderboard,
   };
 }));
 
@@ -197,6 +201,9 @@ async function main() {
   });
   watchSafe('github_publications', githubPublications, (evt) => {
     if (evt.fullDocument) push('publication', evt.fullDocument);
+  });
+  watchSafe('leaderboard_profiles', leaderboardProfiles, (evt) => {
+    if (evt.fullDocument) push('leaderboard', evt.fullDocument);
   });
 
   // Reviewer liveness: heartbeat doc older than 6s (or alive:false) reads as

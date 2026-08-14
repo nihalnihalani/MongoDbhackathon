@@ -7,8 +7,9 @@
 import { client } from './db.js';
 import { embed } from './embed.js';
 import {
-  contributors, receipts, incidents, contracts, nextSeq, VECTOR_INDEX,
+  contributors, receipts, incidents, contracts, leaderboardProfiles, nextSeq, VECTOR_INDEX,
 } from './schema.js';
+import { buildContributorLeaderboard, leaderboardScoring } from './leaderboard.js';
 
 export async function submitPR({
   author, subsystem, changeType = 'feature', title, code, fnName = null,
@@ -202,4 +203,30 @@ export async function standing() {
     }
   }
   return rows;
+}
+
+/**
+ * Public, evidence-linked review readiness beside the live fork contributor.
+ * Profiles provide bounded public history; live GitHub receipts provide the
+ * score movements that judges can watch happen in this session.
+ */
+export async function contributorLeaderboard() {
+  const [profiles, githubReceipts] = await Promise.all([
+    leaderboardProfiles().find({ active: true }).toArray(),
+    receipts().find(
+      { 'github.repository': { $type: 'string' } },
+      {
+        projection: {
+          prNum: 1, author: 1, subsystem: 1, status: 1, ts: 1,
+          reviewEvents: 1,
+          'github.number': 1, 'github.repository': 1, 'github.htmlUrl': 1,
+          'github.publication.publishedAt': 1,
+        },
+      },
+    ).toArray(),
+  ]);
+  return {
+    rows: buildContributorLeaderboard({ profiles, receipts: githubReceipts }),
+    scoring: leaderboardScoring,
+  };
 }

@@ -337,7 +337,7 @@ code-review platform. Production work includes:
 
 ## Non-goals
 
-- Ranking humans on a public leaderboard
+- Treating the evidence-linked `contributor × subsystem` leaderboard as a global ability, employment or performance ranking
 - Automatically deciding whose fault an incident was
 - Letting high-history contributors bypass baseline controls
 - Treating vector similarity as causal evidence
