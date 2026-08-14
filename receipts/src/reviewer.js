@@ -101,18 +101,22 @@ async function main() {
     console.log(`[reviewer#${generation}] PR #${pr.prNum} → ${r.verdict}: ${r.notes.slice(0, 90)}`);
   }
 
-  receipts().watch(
-    [{
-      $match: {
-        $or: [
-          { operationType: 'insert' },
-          { 'updateDescription.updatedFields.status': 'submitted' },
-        ],
-      },
-    }],
-    { fullDocument: 'updateLookup' },
-  )
-    .on('change', async (evt) => {
+  // Venue wifi will blip. A dropped change stream re-opens after 2s and any
+  // PR submitted during the gap is picked up by the pending re-scan — the
+  // reviewer only dies when someone kills it on purpose.
+  const startWatch = () => {
+    const stream = receipts().watch(
+      [{
+        $match: {
+          $or: [
+            { operationType: 'insert' },
+            { 'updateDescription.updatedFields.status': 'submitted' },
+          ],
+        },
+      }],
+      { fullDocument: 'updateLookup' },
+    );
+    stream.on('change', async (evt) => {
       const pr = evt.fullDocument;
       if (pr?.status !== 'submitted') return;
       try {
@@ -121,12 +125,20 @@ async function main() {
       } catch (e) {
         console.error(`[reviewer#${generation}] review of PR #${pr?.prNum} failed:`, e);
       }
-    })
-    .on('error', (e) => {
-      if (dying) return; // client.close() interrupts the stream — that's the plan
-      console.error('[reviewer] change stream died:', e.message);
-      process.exit(1);
     });
+    stream.on('error', async (e) => {
+      if (dying) return; // client.close() interrupts the stream — that's the plan
+      console.error('[reviewer] change stream dropped, resuming in 2s:', e.message);
+      await stream.close().catch(() => {});
+      setTimeout(async () => {
+        startWatch();
+        for await (const pr of receipts().find({ status: 'submitted' })) {
+          await me.reviewOne(pr).catch((err) => console.error('[reviewer] rescan failed:', err.message));
+        }
+      }, 2000);
+    });
+  };
+  startWatch();
 
   // Graceful death marks the tombstone; kill -9 is caught by heartbeat expiry.
   let dying = false;

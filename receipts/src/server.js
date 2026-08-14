@@ -158,7 +158,19 @@ async function main() {
   await initEmbedder(); // warmed here so /submit embeds without a cold start
   await waitForIndex();
 
-  receipts().watch([], { fullDocument: 'updateLookup' }).on('change', async (evt) => {
+  // Venue wifi will blip; a dropped stream re-opens after 2s and the stage
+  // repaints from /state on its own SSE reconnect. Never crash the web process.
+  const watchSafe = (label, coll, onChange) => {
+    const stream = coll().watch([], { fullDocument: 'updateLookup' });
+    stream.on('change', onChange);
+    stream.on('error', async (e) => {
+      console.error(`[server] ${label} stream dropped, resuming in 2s:`, e.message);
+      await stream.close().catch(() => {});
+      setTimeout(() => watchSafe(label, coll, onChange), 2000);
+    });
+  };
+
+  watchSafe('receipts', receipts, async (evt) => {
     if (!evt.fullDocument && evt.operationType !== 'delete') return;
     if (evt.fullDocument) {
       const { canaryCases, ...doc } = evt.fullDocument;
@@ -171,13 +183,13 @@ async function main() {
     }
     push('standing', await standing());
   });
-  incidents().watch([], { fullDocument: 'updateLookup' }).on('change', (evt) => {
+  watchSafe('incidents', incidents, (evt) => {
     if (evt.fullDocument) {
       const { embedding, ...doc } = evt.fullDocument;
       push('incident', doc);
     }
   });
-  contracts().watch([], { fullDocument: 'updateLookup' }).on('change', (evt) => {
+  watchSafe('contracts', contracts, (evt) => {
     if (evt.fullDocument) push('contract', evt.fullDocument);
   });
   githubDeliveries().watch([], { fullDocument: 'updateLookup' }).on('change', (evt) => {
