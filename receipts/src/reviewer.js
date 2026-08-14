@@ -78,9 +78,19 @@ export function makeReviewer(generation) {
 }
 
 async function main() {
-  await setupSchema();
+  // Boot must also outlive a network outage (venue DNS died live today):
+  // retry until Atlas is reachable rather than exiting.
+  for (;;) {
+    try {
+      await setupSchema();
+      await waitForIndex();
+      break;
+    } catch (e) {
+      console.error('[reviewer] cannot reach Atlas, retrying in 5s:', e.message);
+      await new Promise((r) => setTimeout(r, 5000));
+    }
+  }
   await initEmbedder();
-  await waitForIndex();
 
   const generation = await nextSeq('reviewer_generation');
   const me = makeReviewer(generation);
@@ -131,9 +141,16 @@ async function main() {
       console.error('[reviewer] change stream dropped, resuming in 2s:', e.message);
       await stream.close().catch(() => {});
       setTimeout(async () => {
-        startWatch();
-        for await (const pr of receipts().find({ status: 'submitted' })) {
-          await me.reviewOne(pr).catch((err) => console.error('[reviewer] rescan failed:', err.message));
+        try {
+          startWatch();
+          for await (const pr of receipts().find({ status: 'submitted' })) {
+            await me.reviewOne(pr).catch((err) => console.error('[reviewer] rescan failed:', err.message));
+          }
+        } catch (err) {
+          // Network still down (DNS included) — keep trying; the driver
+          // recovers the moment the venue wifi does.
+          console.error('[reviewer] resume failed, retrying:', err.message);
+          stream.emit('error', err);
         }
       }, 2000);
     });
@@ -153,5 +170,10 @@ async function main() {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
+  // Supervisor stance: this process dies ONLY when a human kills it. Total
+  // network loss (observed live: getaddrinfo ENOTFOUND during a wifi drop)
+  // must strand it waiting, loudly, not exit it.
+  process.on('unhandledRejection', (e) => console.error('[reviewer] unhandled rejection (surviving):', e?.message ?? e));
+  process.on('uncaughtException', (e) => console.error('[reviewer] uncaught exception (surviving):', e?.message ?? e));
   main().catch((e) => { console.error(e); process.exit(1); });
 }

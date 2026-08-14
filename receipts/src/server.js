@@ -154,9 +154,19 @@ app.get('/state', api(async () => ({
 })));
 
 async function main() {
-  await setupSchema();
+  // Boot must also outlive a network outage (venue DNS died live today):
+  // retry until Atlas is reachable rather than exiting.
+  for (;;) {
+    try {
+      await setupSchema();
+      await waitForIndex();
+      break;
+    } catch (e) {
+      console.error('[server] cannot reach Atlas, retrying in 5s:', e.message);
+      await new Promise((r) => setTimeout(r, 5000));
+    }
+  }
   await initEmbedder(); // warmed here so /submit embeds without a cold start
-  await waitForIndex();
 
   // Venue wifi will blip; a dropped stream re-opens after 2s and the stage
   // repaints from /state on its own SSE reconnect. Never crash the web process.
@@ -222,4 +232,8 @@ async function main() {
   ));
 }
 
+// Same supervisor stance as the reviewer: total network loss must never take
+// down the stage while a demo is running.
+process.on('unhandledRejection', (e) => console.error('[server] unhandled rejection (surviving):', e?.message ?? e));
+process.on('uncaughtException', (e) => console.error('[server] uncaught exception (surviving):', e?.message ?? e));
 main().catch((e) => { console.error(e); process.exit(1); });
