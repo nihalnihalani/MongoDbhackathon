@@ -16,6 +16,9 @@
     .memory{margin-top:16px;padding:17px;border:1px dashed #625c48;background:#1c1912}.memory h3{margin:8px 0 7px;font:600 20px Georgia,serif}.memory p{color:#c9c4b4;margin:0;line-height:1.5}.memory .source{margin-top:11px;font:11px/1.5 ui-monospace,monospace;color:var(--muted)}
     .timeline{list-style:none;padding:0;margin:14px 0 0}.timeline li{display:grid;grid-template-columns:12px 1fr;gap:12px;padding:0 0 19px;color:var(--muted);line-height:1.4}.timeline li:before{content:"";width:9px;height:9px;border-radius:50%;background:var(--line);margin-top:5px;box-shadow:0 0 0 5px #ffffff05}.timeline li.done:before{background:var(--green)}.timeline b{color:var(--ink);display:block;font-size:13px}.timeline span{font:11px ui-monospace,monospace}
     .empty{color:var(--muted);padding:46px 0;text-align:center;font:15px/1.6 Georgia,serif}.foot{margin-top:16px;display:flex;justify-content:space-between;gap:16px;color:var(--muted);font:11px ui-monospace,monospace}.btn{display:inline-flex;margin-top:16px;padding:10px 13px;border:1px solid var(--line);text-decoration:none;font:700 11px ui-monospace,monospace;text-transform:uppercase;letter-spacing:.1em}
+    .board{margin-top:16px}.board-head{display:flex;align-items:end;justify-content:space-between;gap:24px}.board-head h2{font-size:clamp(26px,3vw,38px)}.board-copy{max-width:570px;margin:8px 0 0;color:var(--muted);font:13px/1.5 ui-monospace,monospace}.legend{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:7px}.legend span,.band{border:1px solid var(--line);padding:6px 8px;color:var(--muted);font:700 10px/1 ui-monospace,monospace;text-transform:uppercase;letter-spacing:.06em}.legend .negative{color:var(--red)}.legend .positive{color:var(--green)}
+    .leaderboard{list-style:none;padding:0;margin:20px 0 0;border-top:1px solid var(--line)}.leader-row{display:grid;grid-template-columns:40px minmax(180px,1.1fr) minmax(160px,.9fr) 110px minmax(210px,1.2fr);gap:14px;align-items:center;min-height:78px;border-bottom:1px solid var(--line)}.leader-row.current{background:linear-gradient(90deg,#f0a92f13,transparent);box-shadow:inset 3px 0 var(--amber)}.rank{color:#6f6b60;font:600 22px Georgia,serif;text-align:center}.who a{font:700 15px ui-monospace,monospace;text-decoration:none}.who small,.scope small,.event small{display:block;margin-top:6px;color:var(--muted);font:10px/1.35 ui-monospace,monospace}.you{display:inline-block;margin-left:7px;padding:3px 5px;background:var(--amber);color:#18130b;font:900 9px/1 ui-monospace,monospace;letter-spacing:.08em;vertical-align:2px}.scope{font:13px/1.3 Georgia,serif}.score{text-align:right}.score strong{display:block;font:600 33px/1 Georgia,serif}.movement{font:800 11px ui-monospace,monospace}.movement.down{color:var(--red)}.movement.up{color:var(--green)}.band{display:inline-block;margin-top:5px;padding:4px 6px}.band.elevated{color:var(--amber)}.band.maximum{color:var(--red)}.event{font:12px/1.35 Georgia,serif}.event a{text-decoration-color:#706b5d;text-underline-offset:3px}.transition{color:var(--muted);font:10px ui-monospace,monospace}.board-empty{padding:25px 0;color:var(--muted);font:13px ui-monospace,monospace}
+    @media(max-width:900px){.leader-row{grid-template-columns:32px 1fr 100px}.scope{grid-column:2}.event{grid-column:2/4;padding-bottom:14px}.board-head{align-items:start;flex-direction:column}.legend{justify-content:flex-start}}
     @media(max-width:800px){.pipeline{grid-template-columns:1fr 1fr}.grid{grid-template-columns:1fr}header{display:block}.live{margin-top:16px}}
   </style>
 </head>
@@ -32,6 +35,10 @@
     <section class="card" id="case"><div class="empty">Open a pull request against <b>gorajing/mongo</b>.<br>The live case will appear here without pressing a button.</div></section>
     <aside class="card"><div class="label">Evidence chain</div><ol class="timeline" id="timeline"></ol><div class="memory" id="memory"><div class="label">Persistent memory</div><h3>Loading organizational contract…</h3></div></aside>
   </div>
+  <section class="card board" aria-labelledby="leaderboard-title">
+    <div class="board-head"><div><div class="label">Evidence ledger · Aug 6–13 + live fork</div><h2 id="leaderboard-title">Contributor review confidence</h2><p class="board-copy">Evidence-readiness within one subsystem, not an employee-performance rating. Every movement links to the PR, revert or corrective re-land that caused it.</p></div><div class="legend" id="score-legend"></div></div>
+    <ol class="leaderboard" id="leaderboard"><li class="board-empty">Loading evidence-linked scores…</li></ol>
+  </section>
   <div class="foot"><span id="updated">Not updated yet</span><span>The reviewer can die. The lesson remains.</span></div>
 </main>
 <script>
@@ -39,6 +46,42 @@
   const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (ch) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))
   const time = (value) => value ? new Date(value).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'}) : 'pending'
   const setStep = (id, on, text) => { byId(id).classList.toggle('on', Boolean(on)); byId(id.replace('step-','') + '-state').textContent = text }
+  const githubUrl = (value) => /^https:\/\/github\.com\//.test(value || '') ? value : null
+
+  function renderLeaderboard(leaderboard) {
+    const rows = leaderboard?.rows || []
+    const scoring = leaderboard?.scoring
+    if (scoring) {
+      const signed = (value) => value > 0 ? '+' + value : String(value)
+      byId('score-legend').innerHTML = [
+        ['baseline ' + scoring.baseline, ''],
+        ['missing evidence ' + signed(scoring.deltas['missing-evidence']), 'negative'],
+        ['auto-revert ' + signed(scoring.deltas['auto-revert']), 'negative'],
+        ['corrective re-land ' + signed(scoring.deltas['corrective-reland']), 'positive'],
+      ].map(([label, tone]) => '<span class="' + tone + '">' + esc(label) + '</span>').join('')
+    }
+    if (!rows.length) {
+      byId('leaderboard').innerHTML = '<li class="board-empty">Seed the bounded public evidence sample to load contributor scores.</li>'
+      return
+    }
+    byId('leaderboard').innerHTML = rows.map((row, index) => {
+      const latest = row.events?.[row.events.length - 1]
+      const movement = row.movement > 0 ? '+' + row.movement : String(row.movement)
+      const movementTone = row.movement > 0 ? 'up' : (row.movement < 0 ? 'down' : '')
+      const profileUrl = githubUrl(row.profileUrl)
+      const eventUrl = githubUrl(latest?.url)
+      const handle = profileUrl ? '<a href="' + esc(profileUrl) + '" target="_blank" rel="noreferrer">@' + esc(row.handle) + '</a>' : '@' + esc(row.handle)
+      const eventLabel = latest?.label || 'No scored failure in the bounded sample'
+      const event = eventUrl ? '<a href="' + esc(eventUrl) + '" target="_blank" rel="noreferrer">' + esc(eventLabel) + ' ↗</a>' : esc(eventLabel)
+      const transition = latest ? latest.from + ' → ' + latest.to + ' · ' + (latest.delta > 0 ? '+' : '') + latest.delta : 'baseline retained'
+      return '<li class="leader-row ' + (row.isCurrentUser ? 'current' : '') + '">' +
+        '<div class="rank">' + (index + 1) + '</div>' +
+        '<div class="who">' + handle + (row.isCurrentUser ? '<span class="you">YOU · LIVE</span>' : '') + '<small>' + esc(row.repo) + '</small></div>' +
+        '<div class="scope">' + esc(row.subsystem) + '<small>' + esc(row.basis) + '</small></div>' +
+        '<div class="score"><strong>' + esc(row.score) + '</strong><span class="movement ' + movementTone + '">' + esc(movement) + '</span><br><span class="band ' + esc(row.band?.key) + '">' + esc(row.band?.label) + '</span></div>' +
+        '<div class="event">' + event + '<small class="transition">' + esc(transition) + '</small></div></li>'
+    }).join('')
+  }
 
   function render(data) {
     const delivery = data.delivery, receipt = data.receipt, publication = data.publication
@@ -77,6 +120,7 @@
       [publication?.status === 'published', 'Verdict posted back to GitHub', publication && publication.verdict + ' · ' + time(publication.publishedAt)]
     ]
     byId('timeline').innerHTML = events.map((item) => '<li class="' + (item[0] ? 'done' : '') + '"><div><b>' + esc(item[1]) + '</b><span>' + esc(item[2] || 'pending') + '</span></div></li>').join('')
+    renderLeaderboard(data.leaderboard)
     byId('updated').textContent = 'last read ' + time(data.now)
   }
 
@@ -87,7 +131,7 @@
   const source = new EventSource('/events')
   source.onopen = () => { byId('connection').textContent = 'live MongoDB stream' }
   source.onerror = () => { byId('connection').textContent = 'reconnecting' }
-  for (const name of ['github_delivery','receipt','reviewer','publication','contract']) source.addEventListener(name, refresh)
+  for (const name of ['github_delivery','receipt','reviewer','publication','contract','leaderboard']) source.addEventListener(name, refresh)
   refresh()
   setInterval(refresh, 2500)
 </script>

@@ -41,11 +41,11 @@ PR ships → canary fails in production → operator confirms the causal linkage
 
 The reviewer is deliberately disposable. Kill it mid-demo and its successor boots with **zero prior messages**, reads the contract from MongoDB, and blocks a PR that its predecessor would have waved through. That behavioral delta — not a longer prompt — is the whole claim.
 
-**How it frames people.** The Elo is on the *change*, not the author. PR-Elo rates how much proven evidence a pull request must carry to enter a subsystem — a rating that moves when a canary proves something, never a rating of an engineer.
+**How it frames people.** Enforcement stays on the *change*: no contributor score can waive a required check. The live demo also shows a transparent `contributor × subsystem` review-confidence score, computed from linked evidence events rather than inferred ability. It answers “how much proof has this contributor recently carried in this area?”, not “how good is this engineer?”
 
 | Rule | What it means |
 |---|---|
-| 🎯 **The change is what's rated** | Output is a *review-depth requirement* on a PR entering a subsystem. Standing is scoped `contributor × subsystem`, read as history — never published as a global developer score. |
+| 🎯 **The change is still gated** | Output is a *review-depth requirement* on a PR entering a subsystem. Contributor history can increase scrutiny but never remove baseline controls. |
 | ❓ **Unknown by default** | States are `unknown · building · proven · proof-debt`. No evidence ≠ trusted, and ≠ suspect. |
 | 🏛️ **Organizational, not personal** | A confirmed payments failure guards *every* future payments PR, regardless of author. |
 | ↩️ **Recovery is always open** | Proof debt is paid down by executed evidence; contracts unlock. |
@@ -147,7 +147,7 @@ Embeddings run **locally** (`Xenova/all-MiniLM-L6-v2`, 384-dim) — no embedding
 | Surface | Path | What it is |
 |---|---|---|
 | **Canonical demo** | `receipts/public/` | The operator console (numbered controls) and the live stage screen. Backed by real MongoDB writes and driven by change streams over SSE. **This is what runs on stage.** |
-| **Live GitHub proof** | `receipts/public/live.html` | A PR targeting an authorized fork triggers a signed webhook, becomes an idempotent MongoDB receipt, is reviewed by the disposable worker and receives a GitHub commit status plus review comment. |
+| **Live GitHub proof** | `receipts/public/live.html` | A PR targeting an authorized fork triggers a signed webhook, becomes an idempotent MongoDB receipt, is reviewed by the disposable worker and receives a GitHub commit status plus review comment. The same page recomputes an evidence-linked contributor leaderboard from MongoDB. |
 | **Product vision** | `receipts/web/` | React 19 + TypeScript strict + Vite 8 + Tailwind v4. Routes: `/` Courtroom (live stream), `/contributor/:id` Dossier, `/review/:id` Case File, with a control-condition compare at `/review/rev-512`. Dark/light, WCAG AA tokens, `prefers-reduced-motion` parity. Design spec: [`receipts/web/DESIGN.md`](receipts/web/DESIGN.md) — *"a microfiche reader in a dark evidence room."* |
 
 **Honest boundary:** the React UI runs on **fixture replay** and is not yet wired to the MongoDB API — it renders the product this becomes, not live data. The mechanics claims in this README are all proven by the `public/` demo and the source referenced above.
@@ -190,6 +190,8 @@ npm run reviewer          # generation N starts with zero prior messages
 Forward events only to `POST /webhooks/github` through a one-way relay such as Smee, subscribe the fork webhook to `pull_request`, and use the same random `GITHUB_WEBHOOK_SECRET` on both sides. Do **not** reverse-proxy the whole Express app: `/submit` and `/ship` are unauthenticated local-demo controls, and `/ship` executes operator-authored fixture code. Set `GITHUB_TOKEN` for deployment; locally the publisher can reuse an authenticated `gh api` session without exporting its token. Open the live page at `http://localhost:4100/live.html`, then open or update a PR whose base is `gorajing/mongo`.
 
 The webhook acknowledges only after its delivery ID is durably recorded. The worker fetches the real GitHub patch, maps changed paths to a subsystem, lets MongoDB contracts select scrutiny and posts the result as `PR-Elo / persistent review`. Replayed delivery IDs and repeated publications are deduplicated in MongoDB; startup recovery retries both interrupted deliveries and reviewed receipts whose GitHub publication did not finish.
+
+The live leaderboard starts each `contributor × subsystem` scope at 100. Missing required evidence is −5, review concerns are −3, a public auto-revert is −6, a corrective re-land is +4 and verified evidence is +3. The MongoDB contributor rows are a disclosed Aug 6–13 public sample; the `gorajing` row is calculated from append-only verdict events on actual signed-webhook receipts in the demo fork. A repaired PR keeps its earlier failure event before adding its recovery event. Every movement links to its public PR or commit. This is a demo review-readiness signal, not an employment or performance metric.
 
 <details>
 <summary><b>Optional checks & the product-vision UI</b></summary>

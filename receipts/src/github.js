@@ -269,7 +269,7 @@ function reviewComment(receipt, result, key, targetUrl) {
     `**Why this scrutiny:** ${memory}`,
     ...(unmet ? ['', unmet] : []),
     '',
-    `Reviewer: \`${receipt.review.by}\` · Mongo receipt: \`#${receipt.prNum}\` · Contributor credibility unchanged`,
+    `Reviewer: \`${receipt.review.by}\` · Mongo receipt: \`#${receipt.prNum}\` · Subsystem review-readiness event recorded`,
     ...(targetUrl ? [`[Open the live review receipt](${targetUrl})`] : []),
   ].join('\n');
 }

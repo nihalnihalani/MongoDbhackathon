@@ -10,6 +10,7 @@ import { initEmbedder } from './embed.js';
 import {
   setupSchema, waitForIndex, receipts, contracts, reviewerStatus, nextSeq,
 } from './schema.js';
+import { reviewEventForReceipt } from './leaderboard.js';
 import { similarIncidents, runCanary } from './ops.js';
 import { standardReview, deepReview } from './llm.js';
 
@@ -35,7 +36,13 @@ export function makeReviewer(generation) {
           `${c.requirement} required before this ${pr.subsystem} change can merge.`,
         unmet: unmet.map((u) => ({ incidentNum: u.incidentNum, evidenceKey: u.evidenceKey, requirement: u.requirement })),
       };
-      await receipts().updateOne({ prNum: pr.prNum }, { $set: { status: 'blocked', review } });
+      await receipts().updateOne(
+        { prNum: pr.prNum },
+        {
+          $set: { status: 'blocked', review },
+          $push: { reviewEvents: reviewEventForReceipt(pr, 'blocked', new Date()) },
+        },
+      );
       return review;
     }
 
@@ -70,7 +77,13 @@ export function makeReviewer(generation) {
     }
     const review = { by, msgCount, mode: escalate ? 'deep' : 'standard', ...result };
     const status = review.verdict === 'approve' ? 'approved' : 'concerns';
-    await receipts().updateOne({ prNum: pr.prNum }, { $set: { status, review } });
+    await receipts().updateOne(
+      { prNum: pr.prNum },
+      {
+        $set: { status, review },
+        $push: { reviewEvents: reviewEventForReceipt(pr, status, new Date()) },
+      },
+    );
     return review;
   }
 

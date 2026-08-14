@@ -10,7 +10,7 @@
  *   contributors     { _id: agentName, kind, createdAt }
  *   pr_receipts      { prNum, author, subsystem, changeType, title, code, fnName,
  *                      evidence[], canaryCases[], onFail, status, outcome,
- *                      review, canary, ts }
+ *                      review, reviewEvents[], canary, ts }
  *                      status:  submitted | approved | concerns | blocked | merged
  *                      outcome: pending | clean | failed
  *   incidents        { num, prNum, author, subsystem, description, failingCase,
@@ -23,6 +23,8 @@
  *                               status, receiptPrNum, receivedAt, processedAt }
  *   github_publications { _id: publicationKey, repository, prNum, headSha,
  *                         status, statusUrl, commentUrl, publishedAt }
+ *   leaderboard_profiles { _id: handle+subsystem, handle, repo, subsystem,
+ *                          basis, events[], active, isCurrentUser }
  */
 import { client, db } from './db.js';
 
@@ -37,6 +39,7 @@ export const counters = () => db().collection('counters');
 export const reviewerStatus = () => db().collection('reviewer_status');
 export const githubDeliveries = () => db().collection('github_webhook_deliveries');
 export const githubPublications = () => db().collection('github_publications');
+export const leaderboardProfiles = () => db().collection('leaderboard_profiles');
 
 export async function nextSeq(name) {
   const r = await counters().findOneAndUpdate(
@@ -68,6 +71,7 @@ export async function setupSchema() {
   );
   await githubDeliveries().createIndex({ status: 1, receivedAt: 1 });
   await githubPublications().createIndex({ status: 1, createdAt: 1 });
+  await leaderboardProfiles().createIndex({ active: 1, handle: 1 });
 
   const existing = await incidents().listSearchIndexes().toArray().catch(() => []);
   if (!existing.some((i) => i.name === VECTOR_INDEX)) {
