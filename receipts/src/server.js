@@ -192,10 +192,10 @@ async function main() {
   watchSafe('contracts', contracts, (evt) => {
     if (evt.fullDocument) push('contract', evt.fullDocument);
   });
-  githubDeliveries().watch([], { fullDocument: 'updateLookup' }).on('change', (evt) => {
+  watchSafe('github_deliveries', githubDeliveries, (evt) => {
     if (evt.fullDocument) push('github_delivery', evt.fullDocument);
   });
-  githubPublications().watch([], { fullDocument: 'updateLookup' }).on('change', (evt) => {
+  watchSafe('github_publications', githubPublications, (evt) => {
     if (evt.fullDocument) push('publication', evt.fullDocument);
   });
 
